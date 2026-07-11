@@ -12,7 +12,12 @@ const works = [
     image: "/work/brand-photography/01.jpg",
     href: "/brand-photography",
   },
-  { id: 2, label: "Placeholder — Work 2" },
+  {
+    id: 2,
+    label: "Models Portfolio Work",
+    image: "/work/models-portfolio/01.jpg",
+    href: "/models-portfolio-work",
+  },
   { id: 3, label: "Placeholder — Work 3" },
 ];
 
