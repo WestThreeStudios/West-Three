@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import Image from "next/image";
 
 type CoverPage = {
   edition: string;
-  headlineLine1: string;
-  headlineLine2: string;
+  headlineLine1?: string;
+  headlineLine2?: string;
+  logoSrc?: string;
   tagline: string;
   label: string;
 };
@@ -14,8 +16,7 @@ type CoverPage = {
 const pages: CoverPage[] = [
   {
     edition: "001",
-    headlineLine1: "Davis",
-    headlineLine2: "III.",
+    logoSrc: "/logo-west-three.png",
     tagline:
       "Story-driven photography for brands that want to be remembered, not just seen.",
     label: "Commercial & Branding",
@@ -53,11 +54,24 @@ function CoverFace({ page }: { page: CoverPage }) {
         </span>
       </div>
 
-      <h1 className="mt-[9vh] font-display font-black uppercase leading-[0.9] text-ink text-[clamp(3.5rem,10vw,8.5rem)]">
-        {page.headlineLine1}
-        <br />
-        {page.headlineLine2}
-      </h1>
+      {page.logoSrc ? (
+        <div className="mt-[9vh] w-[min(90%,520px)]">
+          <Image
+            src={page.logoSrc}
+            alt="West Three — Photography Studio"
+            width={1590}
+            height={987}
+            className="h-auto w-full"
+            priority
+          />
+        </div>
+      ) : (
+        <h1 className="mt-[9vh] font-display font-black uppercase leading-[0.9] text-ink text-[clamp(3.5rem,10vw,8.5rem)]">
+          {page.headlineLine1}
+          <br />
+          {page.headlineLine2}
+        </h1>
+      )}
 
       <div className="flex-1" />
 
