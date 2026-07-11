@@ -85,7 +85,7 @@ export default function Hero() {
                   alt={work.label}
                   fill
                   sizes="(min-width: 768px) 33vw, 100vw"
-                  className="object-cover"
+                  className="object-cover object-top"
                 />
                 <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2.5 py-1 font-body text-[10px] uppercase tracking-[0.1em] text-ink">
                   {work.label}
@@ -128,7 +128,7 @@ export default function Hero() {
                 alt={activeWork.label}
                 fill
                 sizes="(min-width: 768px) 56vw, 100vw"
-                className="object-cover"
+                className="object-cover object-top"
                 priority
               />
               <span className="absolute bottom-4 left-4 rounded-full bg-white/90 px-3 py-1.5 font-body text-xs uppercase tracking-[0.1em] text-ink">

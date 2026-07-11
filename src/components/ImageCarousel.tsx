@@ -41,7 +41,7 @@ export default function ImageCarousel({
             alt={`${alt} ${index + 1}`}
             fill
             sizes="100vw"
-            className="object-cover"
+            className="object-cover object-top"
             priority={index === 0}
           />
         </motion.div>

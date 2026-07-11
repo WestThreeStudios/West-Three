@@ -6,14 +6,10 @@ export const metadata: Metadata = {
   title: "Models Portfolio Work",
 };
 
-const images = [
-  "/work/models-portfolio/01.jpg",
-  "/work/models-portfolio/02.jpg",
-  "/work/models-portfolio/03.jpg",
-  "/work/models-portfolio/04.jpg",
-  "/work/models-portfolio/05.jpg",
-  "/work/models-portfolio/06.jpg",
-];
+const images = Array.from(
+  { length: 16 },
+  (_, i) => `/work/models-portfolio/${String(i + 1).padStart(2, "0")}.jpg`,
+);
 
 export default function ModelsPortfolioWorkPage() {
   return (
