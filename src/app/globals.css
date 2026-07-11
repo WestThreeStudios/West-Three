@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+:root {
+  /* Single accent color for the whole site. Alternate to test: #2F6FED */
+  --marker: #e8600a;
+  --line: rgba(10, 10, 10, 0.14);
+}
+
+@theme inline {
+  --color-ink: #0a0a0a;
+  --color-marker: var(--marker);
+  --color-line: var(--line);
+  --font-display: var(--font-archivo);
+  --font-body: var(--font-inter);
+  --font-marker: var(--font-permanent-marker);
+}
+
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-ink);
+}
+
+.scroll-section {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.marker-ink {
+  background: radial-gradient(
+    ellipse 75% 90% at 50% 45%,
+    var(--marker) 0%,
+    var(--marker) 40%,
+    color-mix(in srgb, var(--marker) 70%, transparent) 72%,
+    color-mix(in srgb, var(--marker) 25%, transparent) 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-shadow:
+    1px 1px 0 rgba(0, 0, 0, 0.1),
+    2px 2px 0 rgba(0, 0, 0, 0.1),
+    3px 3px 0 rgba(0, 0, 0, 0.09),
+    4px 4px 0 rgba(0, 0, 0, 0.08),
+    6px 8px 14px rgba(0, 0, 0, 0.3);
+}
