@@ -18,7 +18,12 @@ const works = [
     image: "/work/models-portfolio/01.jpg",
     href: "/models-portfolio-work",
   },
-  { id: 3, label: "Placeholder — Work 3" },
+  {
+    id: 3,
+    label: "Fashion Photography",
+    image: "/work/fashion-photography/05.jpg",
+    href: "/fashion-photography",
+  },
 ];
 
 const fadeUp = {
@@ -121,14 +126,14 @@ export default function Hero() {
           {activeWork.href ? (
             <Link
               href={activeWork.href}
-              className="relative flex aspect-[4/5] items-center justify-center overflow-hidden md:aspect-auto md:h-full md:min-h-[420px]"
+              className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-ink/5 md:aspect-auto md:h-full md:min-h-[420px]"
             >
               <Image
                 src={activeWork.image!}
                 alt={activeWork.label}
                 fill
                 sizes="(min-width: 768px) 56vw, 100vw"
-                className="object-cover object-top"
+                className="object-contain"
                 priority
               />
               <span className="absolute bottom-4 left-4 rounded-full bg-white/90 px-3 py-1.5 font-body text-xs uppercase tracking-[0.1em] text-ink">

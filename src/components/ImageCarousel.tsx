@@ -26,7 +26,7 @@ export default function ImageCarousel({
   }, [playing, images.length]);
 
   return (
-    <div className="relative aspect-[2/3] w-full overflow-hidden bg-ink/5 md:aspect-auto md:h-[85vh]">
+    <div className="relative aspect-[4/5] w-full overflow-hidden bg-ink/5">
       <AnimatePresence mode="sync">
         <motion.div
           key={index}
@@ -41,7 +41,7 @@ export default function ImageCarousel({
             alt={`${alt} ${index + 1}`}
             fill
             sizes="100vw"
-            className="object-cover object-top"
+            className="object-contain"
             priority={index === 0}
           />
         </motion.div>
