@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
+import ImageCarousel from "@/components/ImageCarousel";
 
 export const metadata: Metadata = {
   title: "Brand Photography",
@@ -12,6 +12,9 @@ const images = [
   "/work/brand-photography/03.jpg",
   "/work/brand-photography/04.jpg",
   "/work/brand-photography/05.jpg",
+  "/work/brand-photography/06.jpg",
+  "/work/brand-photography/07.jpg",
+  "/work/brand-photography/08.jpg",
 ];
 
 export default function BrandPhotographyPage() {
@@ -38,22 +41,8 @@ export default function BrandPhotographyPage() {
         Product and lifestyle photography featuring Lonely Ghost apparel.
       </p>
 
-      <div className="mt-16 flex flex-col gap-6 md:mt-20">
-        {images.map((src, i) => (
-          <div
-            key={src}
-            className="relative aspect-[2/3] w-full overflow-hidden md:aspect-auto md:h-[85vh]"
-          >
-            <Image
-              src={src}
-              alt={`Brand photography ${i + 1}`}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              priority={i === 0}
-            />
-          </div>
-        ))}
+      <div className="mt-16 md:mt-20">
+        <ImageCarousel images={images} alt="Brand photography" />
       </div>
     </div>
   );
