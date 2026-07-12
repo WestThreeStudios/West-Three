@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
+import FlipWordmark from "./FlipWordmark";
 
 const works = [
   {
@@ -31,18 +32,17 @@ const fadeUp = {
   visible: { opacity: 1, y: 0 },
 };
 
-function Wordmark({ delay = 0 }: { delay?: number }) {
+function Wordmark({ delay = 0, startOffset = 0 }: { delay?: number; startOffset?: number }) {
   return (
-    <motion.h1
+    <motion.div
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.4 }}
       variants={fadeUp}
       transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1], delay }}
-      className="select-none font-display text-[clamp(4rem,16vw,13rem)] font-black uppercase leading-[0.85] tracking-[-0.02em] text-ink"
     >
-      West Three
-    </motion.h1>
+      <FlipWordmark startOffset={startOffset} />
+    </motion.div>
   );
 }
 
@@ -167,7 +167,7 @@ export default function Hero() {
       </div>
 
       <div className="mt-20 md:mt-28">
-        <Wordmark />
+        <Wordmark startOffset={6} />
       </div>
     </section>
   );
