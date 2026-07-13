@@ -2,13 +2,56 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { cycleFrames, FINAL_FRAME, FRAME_MS, WordmarkGlyph } from "./FlipWordmark";
+import {
+  cycleFrames,
+  FINAL_FRAME,
+  FRAME_MS,
+  WordmarkGlyph,
+  type Frame,
+} from "./FlipWordmark";
 
 const HOLD_MS = 400;
 const SETTLE_MS = 550;
 const REVEAL_MS = 550;
 const ZOOM_IN_SCALE = 1.6;
 const STORAGE_KEY = "west-three-intro-played";
+
+// Safe bounds for the zoomed-in intro, as a fraction of the viewport —
+// leaves comfortable margin on every side, on both mobile and desktop.
+const MAX_WIDTH_RATIO = 0.86;
+const MAX_HEIGHT_RATIO = 0.46;
+// "WEST THREE" / "West Three" isn't a fixed shape (varies per font), so text
+// frames use a conservative estimated width-to-height ratio rather than a
+// real one — wide enough to be safe for the widest of the cycle's fonts.
+const TEXT_ASPECT_ESTIMATE = 4.5;
+
+// The four logo images vary wildly in shape (the widest is >8:1), so a flat
+// zoom multiplier can't work for all of them — a very wide logo needs a
+// smaller zoom than a squarer one to avoid overflowing horizontally. This
+// computes, per frame, the largest zoom that still fits both dimensions.
+function computeSafeZoom(frame: Frame, desiredZoom: number): number {
+  if (typeof window === "undefined") return desiredZoom;
+
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const rootPx = 16;
+  const baseFontSizePx = Math.min(
+    Math.max(3.5 * rootPx, 0.13 * vw),
+    11 * rootPx,
+  );
+  const heightAtRest = (frame.scale ?? 1) * baseFontSizePx;
+  const aspect =
+    frame.type === "logo" ? frame.width / frame.height : TEXT_ASPECT_ESTIMATE;
+  const widthAtRest = heightAtRest * aspect;
+
+  const maxWidth = vw * MAX_WIDTH_RATIO;
+  const maxHeight = vh * MAX_HEIGHT_RATIO;
+
+  const zoomLimitByWidth = maxWidth / widthAtRest;
+  const zoomLimitByHeight = maxHeight / heightAtRest;
+
+  return Math.min(desiredZoom, zoomLimitByWidth, zoomLimitByHeight);
+}
 
 // cycling: playing through fonts/logos, zoomed in.
 // holding: landed on the real logo, still zoomed in, brief pause.
@@ -26,6 +69,9 @@ export default function IntroOverlay() {
   const [visible, setVisible] = useState(true);
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("cycling");
+  // Safe default matches server/first-client render exactly (no window
+  // access yet) — corrected to the real per-frame value in the effect below.
+  const [zoomScale, setZoomScale] = useState(ZOOM_IN_SCALE);
 
   useEffect(() => {
     if (!visible) return;
@@ -35,6 +81,14 @@ export default function IntroOverlay() {
       document.body.style.overflow = previousOverflow;
     };
   }, [visible]);
+
+  useEffect(() => {
+    const currentFrame = phase === "cycling" ? cycleFrames[index] : FINAL_FRAME;
+    const recompute = () => setZoomScale(computeSafeZoom(currentFrame, ZOOM_IN_SCALE));
+    recompute();
+    window.addEventListener("resize", recompute);
+    return () => window.removeEventListener("resize", recompute);
+  }, [index, phase]);
 
   useEffect(() => {
     let alreadyPlayed = false;
@@ -110,8 +164,11 @@ export default function IntroOverlay() {
       <div className="px-6 pt-28 md:px-10 md:pt-36">
         <motion.div
           style={{ transformOrigin: "top left" }}
-          animate={{ scale: settledScale ? 1 : ZOOM_IN_SCALE }}
-          transition={{ duration: SETTLE_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
+          animate={{ scale: settledScale ? 1 : zoomScale }}
+          transition={{
+            duration: settledScale ? SETTLE_MS / 1000 : 0,
+            ease: [0.16, 1, 0.3, 1],
+          }}
         >
           <WordmarkGlyph frame={frame} />
         </motion.div>
