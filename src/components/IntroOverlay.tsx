@@ -2,13 +2,64 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { cycleFrames, FINAL_FRAME, FRAME_MS, WordmarkGlyph } from "./FlipWordmark";
+import {
+  cycleFrames,
+  FINAL_FRAME,
+  FRAME_MS,
+  WordmarkGlyph,
+  type Frame,
+} from "./FlipWordmark";
 
 const HOLD_MS = 400;
 const SETTLE_MS = 550;
 const REVEAL_MS = 550;
 const ZOOM_IN_SCALE = 1.6;
 const STORAGE_KEY = "west-three-intro-played";
+
+// Safe bounds for the zoomed-in intro, as a fraction of the viewport —
+// leaves comfortable margin on every side, on both mobile and desktop.
+const MAX_WIDTH_RATIO = 0.86;
+const MAX_HEIGHT_RATIO = 0.46;
+// Fallback only, in case a future frame is added without its own measured
+// `aspect` — deliberately generous (wider than every current frame,
+// including the 8.3:1 Rubik Mono one) so it fails safe rather than overflows.
+const TEXT_ASPECT_FALLBACK = 9;
+
+// The four logo images vary wildly in shape (the widest is >8:1), and it
+// turns out several of the text frames are just as extreme once actually
+// measured (Rubik Mono comes in at 8.3:1 — wider than any of the logos) —
+// so a flat zoom multiplier can't work for all of them on every screen size.
+// This computes, per frame, the largest zoom that still fits both
+// dimensions, computed fresh on every render (no separate effect/listener,
+// so there's nothing to get out of sync or left dangling).
+function computeSafeZoom(frame: Frame, desiredZoom: number): number {
+  if (typeof window === "undefined") return desiredZoom;
+
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const rootPx = 16;
+  const baseFontSizePx = Math.min(
+    Math.max(3.5 * rootPx, 0.13 * vw),
+    11 * rootPx,
+  );
+  const heightAtRest = (frame.scale ?? 1) * baseFontSizePx;
+  const aspect =
+    frame.type === "logo"
+      ? frame.width / frame.height
+      : (frame.aspect ?? TEXT_ASPECT_FALLBACK);
+  const widthAtRest = heightAtRest * aspect;
+
+  if (widthAtRest <= 0 || heightAtRest <= 0) return 1;
+
+  const maxWidth = vw * MAX_WIDTH_RATIO;
+  const maxHeight = vh * MAX_HEIGHT_RATIO;
+
+  const zoomLimitByWidth = maxWidth / widthAtRest;
+  const zoomLimitByHeight = maxHeight / heightAtRest;
+
+  const safeZoom = Math.min(desiredZoom, zoomLimitByWidth, zoomLimitByHeight);
+  return Number.isFinite(safeZoom) && safeZoom > 0 ? safeZoom : 1;
+}
 
 // cycling: playing through fonts/logos, zoomed in.
 // holding: landed on the real logo, still zoomed in, brief pause.
@@ -99,6 +150,10 @@ export default function IntroOverlay() {
   const frame = phase === "cycling" ? cycleFrames[index] : FINAL_FRAME;
   const settledScale = phase === "settling" || phase === "revealing";
   const revealing = phase === "revealing";
+  // Computed fresh every render (not a separate effect/listener) — always
+  // correct for the current frame and current viewport, nothing to fall out
+  // of sync. Only matters pre-settle; once settled the target is always 1.
+  const zoomScale = settledScale ? 1 : computeSafeZoom(frame, ZOOM_IN_SCALE);
 
   return (
     <motion.div
@@ -110,8 +165,11 @@ export default function IntroOverlay() {
       <div className="px-6 pt-28 md:px-10 md:pt-36">
         <motion.div
           style={{ transformOrigin: "top left" }}
-          animate={{ scale: settledScale ? 1 : ZOOM_IN_SCALE }}
-          transition={{ duration: SETTLE_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
+          animate={{ scale: zoomScale }}
+          transition={{
+            duration: settledScale ? SETTLE_MS / 1000 : 0,
+            ease: [0.16, 1, 0.3, 1],
+          }}
         >
           <WordmarkGlyph frame={frame} />
         </motion.div>

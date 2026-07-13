@@ -22,22 +22,37 @@ const rubikMono = Rubik_Mono_One({ subsets: ["latin"], weight: "400" });
 const abril = Abril_Fatface({ subsets: ["latin"], weight: "400" });
 
 export type Frame =
-  | { type: "text"; className: string; scale?: number; caps?: boolean }
+  | {
+      type: "text";
+      className: string;
+      scale?: number;
+      caps?: boolean;
+      // Real measured width-to-height ratio of the rendered text at scale 1
+      // (see src/app/debug-frames, used to derive this) — text width can't
+      // be derived from a formula the way a logo's can, since it depends on
+      // the specific font's actual glyph metrics, and guessing a single
+      // conservative estimate for every font undershot several of these by
+      // a wide margin (one measured 8.3:1 — wider than any of the logos).
+      aspect: number;
+    }
   | { type: "logo"; src: string; width: number; height: number; scale?: number };
 
 // Played once, in order, by IntroOverlay — then it lands on FINAL_FRAME (the real logo).
+// Each text frame's `aspect` is the real measured value for that exact
+// className + scale combination (see src/app/debug-frames) — recompute it
+// there if the frame's font, weight, scale, or copy ever changes.
 export const cycleFrames: Frame[] = [
-  { type: "text", className: "font-display font-black", caps: true },
+  { type: "text", className: "font-display font-black", caps: true, aspect: 6.93 },
   { type: "logo", src: "/logos/flip-varsity.png", width: 1212, height: 374, scale: 1.1 },
-  { type: "text", className: bodoni.className, caps: true, scale: 0.95 },
-  { type: "text", className: bebas.className, caps: true },
+  { type: "text", className: bodoni.className, caps: true, scale: 0.95, aspect: 6.66 },
+  { type: "text", className: bebas.className, caps: true, aspect: 3.53 },
   { type: "logo", src: "/logos/flip-script.png", width: 1126, height: 306, scale: 1.05 },
-  { type: "text", className: marker.className, scale: 0.82 },
-  { type: "text", className: rubikMono.className, caps: true, scale: 0.62 },
-  { type: "text", className: playfair.className, scale: 0.95 },
-  { type: "text", className: monoton.className, caps: true, scale: 0.72 },
+  { type: "text", className: marker.className, scale: 0.82, aspect: 5.4 },
+  { type: "text", className: rubikMono.className, caps: true, scale: 0.62, aspect: 8.3 },
+  { type: "text", className: playfair.className, scale: 0.95, aspect: 4.97 },
+  { type: "text", className: monoton.className, caps: true, scale: 0.72, aspect: 6.8 },
   { type: "logo", src: "/logos/flip-serif.png", width: 1102, height: 134, scale: 0.65 },
-  { type: "text", className: abril.className, scale: 0.95 },
+  { type: "text", className: abril.className, scale: 0.95, aspect: 5.06 },
 ];
 
 export const FINAL_FRAME: Frame = {
