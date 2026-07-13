@@ -5,11 +5,20 @@ import { motion } from "motion/react";
 import { cycleFrames, FINAL_FRAME, FRAME_MS, WordmarkGlyph } from "./FlipWordmark";
 
 const HOLD_MS = 400;
-const ZOOM_MS = 700;
+const SETTLE_MS = 550;
+const REVEAL_MS = 550;
 const ZOOM_IN_SCALE = 1.6;
 const STORAGE_KEY = "west-three-intro-played";
 
-type Phase = "cycling" | "holding" | "zooming";
+// cycling: playing through fonts/logos, zoomed in.
+// holding: landed on the real logo, still zoomed in, brief pause.
+// settling: scales down to actual size — still fully opaque, so nothing
+//   underneath is visible yet. This has to finish *before* any fade starts,
+//   otherwise the shrinking overlay copy and the static one underneath are
+//   different sizes at the same time and it reads as the image swapping.
+// revealing: now that the overlay copy is pixel-identical to the real one
+//   beneath it, only the white background fades — invisible handoff.
+type Phase = "cycling" | "holding" | "settling" | "revealing";
 
 export default function IntroOverlay() {
   // Both start in the "playing" state on server and first client render —
@@ -56,16 +65,21 @@ export default function IntroOverlay() {
         setPhase("holding");
         timers.push(
           setTimeout(() => {
-            setPhase("zooming");
+            setPhase("settling");
             timers.push(
               setTimeout(() => {
-                setVisible(false);
-                try {
-                  sessionStorage.setItem(STORAGE_KEY, "1");
-                } catch {
-                  // ignore
-                }
-              }, ZOOM_MS),
+                setPhase("revealing");
+                timers.push(
+                  setTimeout(() => {
+                    setVisible(false);
+                    try {
+                      sessionStorage.setItem(STORAGE_KEY, "1");
+                    } catch {
+                      // ignore
+                    }
+                  }, REVEAL_MS),
+                );
+              }, SETTLE_MS),
             );
           }, HOLD_MS),
         );
@@ -83,20 +97,21 @@ export default function IntroOverlay() {
   if (!visible) return null;
 
   const frame = phase === "cycling" ? cycleFrames[index] : FINAL_FRAME;
-  const zoomedOut = phase === "zooming";
+  const settledScale = phase === "settling" || phase === "revealing";
+  const revealing = phase === "revealing";
 
   return (
     <motion.div
       className="fixed inset-0 z-[100] overflow-hidden bg-white"
-      animate={{ opacity: zoomedOut ? 0 : 1 }}
-      transition={{ duration: ZOOM_MS / 1000, ease: [0.6, 0, 0.2, 1] }}
-      style={{ pointerEvents: zoomedOut ? "none" : "auto" }}
+      animate={{ opacity: revealing ? 0 : 1 }}
+      transition={{ duration: REVEAL_MS / 1000, ease: [0.4, 0, 0.2, 1] }}
+      style={{ pointerEvents: revealing ? "none" : "auto" }}
     >
       <div className="px-6 pt-28 md:px-10 md:pt-36">
         <motion.div
           style={{ transformOrigin: "top left" }}
-          animate={{ scale: zoomedOut ? 1 : ZOOM_IN_SCALE }}
-          transition={{ duration: ZOOM_MS / 1000, ease: [0.6, 0, 0.2, 1] }}
+          animate={{ scale: settledScale ? 1 : ZOOM_IN_SCALE }}
+          transition={{ duration: SETTLE_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
         >
           <WordmarkGlyph frame={frame} />
         </motion.div>
