@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
-import FlipWordmark, { StaticWordmark } from "./FlipWordmark";
+import { StaticWordmark } from "./FlipWordmark";
 
 const works = [
   {
@@ -40,20 +40,6 @@ function Wordmark({ delay = 0 }: { delay?: number }) {
       viewport={{ once: true, amount: 0.4 }}
       variants={fadeUp}
       transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1], delay }}
-    >
-      <FlipWordmark />
-    </motion.div>
-  );
-}
-
-function BottomWordmark() {
-  return (
-    <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.4 }}
-      variants={fadeUp}
-      transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
     >
       <StaticWordmark />
     </motion.div>
@@ -181,7 +167,7 @@ export default function Hero() {
       </div>
 
       <div className="mt-20 md:mt-28">
-        <BottomWordmark />
+        <Wordmark />
       </div>
     </section>
   );

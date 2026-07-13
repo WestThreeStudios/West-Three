@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   Abril_Fatface,
@@ -24,12 +21,12 @@ const playfair = Playfair_Display({
 const rubikMono = Rubik_Mono_One({ subsets: ["latin"], weight: "400" });
 const abril = Abril_Fatface({ subsets: ["latin"], weight: "400" });
 
-type Frame =
+export type Frame =
   | { type: "text"; className: string; scale?: number; caps?: boolean }
   | { type: "logo"; src: string; width: number; height: number; scale?: number };
 
-// Played once, in order, then the animation stops on FINAL_FRAME (the real logo).
-const cycleFrames: Frame[] = [
+// Played once, in order, by IntroOverlay — then it lands on FINAL_FRAME (the real logo).
+export const cycleFrames: Frame[] = [
   { type: "text", className: "font-display font-black", caps: true },
   { type: "logo", src: "/logos/flip-varsity.png", width: 1212, height: 374, scale: 1.1 },
   { type: "text", className: bodoni.className, caps: true, scale: 0.95 },
@@ -43,7 +40,7 @@ const cycleFrames: Frame[] = [
   { type: "text", className: abril.className, scale: 0.95 },
 ];
 
-const FINAL_FRAME: Frame = {
+export const FINAL_FRAME: Frame = {
   type: "logo",
   src: "/logos/flip-bubble.png",
   width: 1590,
@@ -51,8 +48,7 @@ const FINAL_FRAME: Frame = {
   scale: 1.25,
 };
 
-const FRAME_MS = 220;
-const STORAGE_KEY = "west-three-wordmark-played";
+export const FRAME_MS = 220;
 
 function FrameContent({ frame }: { frame: Frame }) {
   return frame.type === "text" ? (
@@ -83,51 +79,10 @@ function FrameContent({ frame }: { frame: Frame }) {
   );
 }
 
-export default function FlipWordmark() {
-  const [index, setIndex] = useState(0);
-  // Must start false on both server and client so the first paint matches
-  // (avoids a hydration mismatch); resolved to the real value in the effect below.
-  const [done, setDone] = useState(false);
-
-  useEffect(() => {
-    let alreadyPlayed = false;
-    try {
-      alreadyPlayed = sessionStorage.getItem(STORAGE_KEY) === "1";
-    } catch {
-      // sessionStorage unavailable (private mode, etc.) — just play the intro.
-    }
-    const reduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    if (reduced || alreadyPlayed) {
-      // Runs once after mount, post-hydration — not a render-loop risk.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDone(true);
-      return;
-    }
-
-    let frame = 0;
-    const id = setInterval(() => {
-      frame += 1;
-      if (frame >= cycleFrames.length) {
-        clearInterval(id);
-        setDone(true);
-        try {
-          sessionStorage.setItem(STORAGE_KEY, "1");
-        } catch {
-          // ignore
-        }
-        return;
-      }
-      setIndex(frame);
-    }, FRAME_MS);
-
-    return () => clearInterval(id);
-  }, []);
-
-  const frame = done ? FINAL_FRAME : cycleFrames[index];
-
+// Shared h1 shell so the overlay's intro frames and the Hero's resting
+// wordmark are pixel-identical in size — required for the overlay's
+// zoom-down to land exactly on top of the real one underneath.
+export function WordmarkGlyph({ frame }: { frame: Frame }) {
   return (
     <h1
       aria-label="West Three"
@@ -140,13 +95,5 @@ export default function FlipWordmark() {
 }
 
 export function StaticWordmark() {
-  return (
-    <h1
-      aria-label="West Three"
-      className="relative flex select-none items-center text-ink"
-      style={{ fontSize: "clamp(3.5rem, 13vw, 11rem)", height: "1.1em" }}
-    >
-      <FrameContent frame={FINAL_FRAME} />
-    </h1>
-  );
+  return <WordmarkGlyph frame={FINAL_FRAME} />;
 }
