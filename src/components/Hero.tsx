@@ -28,10 +28,11 @@ const works = [
   {
     id: 3,
     label: "Fashion Photography",
-    image: "/work/fashion-photography/05.jpg",
+    image: "/work/fashion-photography/01.jpg",
     href: "/fashion-photography",
-    // Face sits right at the top of this shot already.
-    thumbPosition: "center top",
+    // Black-and-white profile shot — face/glasses sit about a quarter of
+    // the way down, with empty backdrop above and hair trailing below.
+    thumbPosition: "center 25%",
   },
 ];
 
