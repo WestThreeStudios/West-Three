@@ -19,11 +19,11 @@ const works = [
   {
     id: 2,
     label: "Models Portfolio Work",
-    image: "/work/models-portfolio/01.jpg",
+    image: "/work/models-portfolio/12.jpg",
     href: "/models-portfolio-work",
-    // Lots of headroom above him in the original — nudging down from the
-    // very top trims the dead space while keeping face + hand in frame.
-    thumbPosition: "center 20%",
+    // Lots of headroom above him in this shot too — nudging further down
+    // than a plain top crop keeps the face + tattooed hand in frame.
+    thumbPosition: "center 35%",
   },
   {
     id: 3,
