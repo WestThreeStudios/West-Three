@@ -10,11 +10,11 @@ const works = [
   {
     id: 1,
     label: "Brand Photography",
-    image: "/work/brand-photography/01.jpg",
+    image: "/work/brand-photography/03.jpg",
     href: "/brand-photography",
-    // Faces sit roughly mid-frame in this shot — a plain center crop keeps
-    // both of them in, where "top" was cutting into her chin.
-    thumbPosition: "center",
+    // Both faces sit in the upper third of this shot — nudging up from
+    // center keeps them in frame without cropping into the sweatshirt text.
+    thumbPosition: "center 20%",
   },
   {
     id: 2,
