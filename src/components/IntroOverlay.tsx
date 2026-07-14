@@ -71,7 +71,15 @@ function computeSafeZoom(frame: Frame, desiredZoom: number): number {
 //   beneath it, only the white background fades — invisible handoff.
 type Phase = "cycling" | "holding" | "settling" | "revealing";
 
-export default function IntroOverlay() {
+type IntroOverlayProps = {
+  // Fires once, telling the page whether the full cycle actually played
+  // (fresh visit) or was skipped (already seen this session / reduced
+  // motion) — the caller uses this to decide whether its own reveal
+  // animations should run or just snap straight to their resting state.
+  onComplete?: (played: boolean) => void;
+};
+
+export default function IntroOverlay({ onComplete }: IntroOverlayProps) {
   // Both start in the "playing" state on server and first client render —
   // resolved to skip (if already seen this session) only after mount below.
   const [visible, setVisible] = useState(true);
@@ -103,6 +111,7 @@ export default function IntroOverlay() {
       // "visible", so this never disagrees with the server-rendered HTML.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisible(false);
+      onComplete?.(false);
       return;
     }
 
@@ -120,6 +129,10 @@ export default function IntroOverlay() {
             timers.push(
               setTimeout(() => {
                 setPhase("revealing");
+                // The white background starts fading right here — cue the
+                // page's own reveal (images sliding up + zooming to fit) so
+                // it plays as the overlay disappears, not after.
+                onComplete?.(true);
                 timers.push(
                   setTimeout(() => {
                     setVisible(false);
@@ -143,6 +156,11 @@ export default function IntroOverlay() {
       clearInterval(cycleId);
       timers.forEach(clearTimeout);
     };
+    // Intentionally run once on mount only — onComplete comes from the
+    // parent as a fresh inline function on every render (it calls setState),
+    // so depending on it would re-run this whole effect (restarting the
+    // cycle) every time the parent re-renders after we call it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!visible) return null;

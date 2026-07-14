@@ -1,11 +1,5 @@
-import Hero from "@/components/Hero";
-import IntroOverlay from "@/components/IntroOverlay";
+import HomeExperience from "@/components/HomeExperience";
 
 export default function Home() {
-  return (
-    <>
-      <IntroOverlay />
-      <Hero />
-    </>
-  );
+  return <HomeExperience />;
 }

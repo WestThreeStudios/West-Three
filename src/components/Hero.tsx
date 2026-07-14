@@ -41,6 +41,25 @@ const fadeUp = {
   visible: { opacity: 1, y: 0 },
 };
 
+// "pending": intro is still playing — stay hidden, overlay is covering us.
+// "instant": intro was skipped (already seen this session) — snap straight
+//   to resting, no animation.
+// "animate": intro just finished a real first-visit play — slide up and
+//   zoom to fit as the overlay's white fades away.
+export type HeroPhase = "pending" | "instant" | "animate";
+
+// Starts lower and slightly zoomed in, then slides up and settles to size —
+// echoes wakawaka.world's imagery sliding into place after their intro.
+const galleryVariants = {
+  hidden: { opacity: 0, y: 90, scale: 1.08 },
+  visible: { opacity: 1, y: 0, scale: 1 },
+};
+
+function galleryTransition(phase: HeroPhase, delay = 0) {
+  if (phase !== "animate") return { duration: 0 };
+  return { duration: 0.9, ease: [0.16, 1, 0.3, 1] as const, delay };
+}
+
 function Wordmark({ delay = 0 }: { delay?: number }) {
   return (
     <motion.div
@@ -55,7 +74,7 @@ function Wordmark({ delay = 0 }: { delay?: number }) {
   );
 }
 
-export default function Hero() {
+export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
   const [active, setActive] = useState(0);
   const [cursor, setCursor] = useState({ x: 0, y: 0, visible: false });
   const activeWork = works[active];
@@ -65,7 +84,7 @@ export default function Hero() {
       <Wordmark />
 
       <div
-        className="relative mt-10 grid grid-cols-1 gap-6 md:mt-14 md:grid-cols-[1fr_1.4fr]"
+        className="relative mt-10 grid grid-cols-1 gap-6 overflow-x-hidden md:mt-14 md:grid-cols-[1fr_1.4fr]"
         onMouseMove={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           setCursor({
@@ -78,10 +97,9 @@ export default function Hero() {
       >
         <motion.div
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-          variants={fadeUp}
-          transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+          animate={phase === "pending" ? "hidden" : "visible"}
+          variants={galleryVariants}
+          transition={galleryTransition(phase)}
           className="order-2 flex flex-col gap-4 md:order-1"
         >
           {works.map((work, i) => {
@@ -126,10 +144,9 @@ export default function Hero() {
 
         <motion.div
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-          variants={fadeUp}
-          transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1], delay: 0.1 }}
+          animate={phase === "pending" ? "hidden" : "visible"}
+          variants={galleryVariants}
+          transition={galleryTransition(phase, phase === "animate" ? 0.08 : 0)}
           className="order-1 md:order-2"
         >
           {activeWork.href ? (
