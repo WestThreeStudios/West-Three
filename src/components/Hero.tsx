@@ -12,18 +12,26 @@ const works = [
     label: "Brand Photography",
     image: "/work/brand-photography/01.jpg",
     href: "/brand-photography",
+    // Faces sit roughly mid-frame in this shot — a plain center crop keeps
+    // both of them in, where "top" was cutting into her chin.
+    thumbPosition: "center",
   },
   {
     id: 2,
     label: "Models Portfolio Work",
     image: "/work/models-portfolio/01.jpg",
     href: "/models-portfolio-work",
+    // Lots of headroom above him in the original — nudging down from the
+    // very top trims the dead space while keeping face + hand in frame.
+    thumbPosition: "center 20%",
   },
   {
     id: 3,
     label: "Fashion Photography",
     image: "/work/fashion-photography/05.jpg",
     href: "/fashion-photography",
+    // Face sits right at the top of this shot already.
+    thumbPosition: "center top",
   },
 ];
 
@@ -75,22 +83,26 @@ export default function Hero() {
           transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
           className="order-2 flex flex-col gap-4 md:order-1"
         >
-          {works.map((work, i) =>
-            work.href ? (
+          {works.map((work, i) => {
+            // The active item is already shown large in the preview next to
+            // this column — skip its thumbnail so the same piece never
+            // displays twice at once.
+            if (i === active) return null;
+
+            return work.href ? (
               <Link
                 key={work.id}
                 href={work.href}
                 onMouseEnter={() => setActive(i)}
-                className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden text-center transition-colors ${
-                  active === i ? "ring-1 ring-ink/50" : ""
-                }`}
+                className="relative flex aspect-[4/3] items-center justify-center overflow-hidden text-center transition-colors"
               >
                 <Image
                   src={work.image!}
                   alt={work.label}
                   fill
                   sizes="(min-width: 768px) 33vw, 100vw"
-                  className="object-cover object-top"
+                  className="object-cover"
+                  style={{ objectPosition: work.thumbPosition }}
                 />
                 <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2.5 py-1 font-body text-[10px] uppercase tracking-[0.1em] text-ink">
                   {work.label}
@@ -101,18 +113,14 @@ export default function Hero() {
                 key={work.id}
                 type="button"
                 onMouseEnter={() => setActive(i)}
-                className={`flex aspect-[4/3] items-center justify-center border border-dashed p-4 text-center transition-colors ${
-                  active === i
-                    ? "border-ink/50 bg-ink/[0.03]"
-                    : "border-ink/20 hover:border-ink/40"
-                }`}
+                className="flex aspect-[4/3] items-center justify-center border border-dashed border-ink/20 p-4 text-center transition-colors hover:border-ink/40"
               >
                 <span className="font-body text-[11px] uppercase tracking-[0.1em] text-ink/50">
                   {work.label}
                 </span>
               </button>
-            ),
-          )}
+            );
+          })}
         </motion.div>
 
         <motion.div
