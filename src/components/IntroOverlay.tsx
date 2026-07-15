@@ -7,7 +7,7 @@ import {
   FRAME_MS,
   BigWordmarkGlyph,
   BigStackedWordmark,
-  stackedWordmarkSize,
+  STACKED_HANDOFF_SCALE,
   type Frame,
 } from "./FlipWordmark";
 
@@ -62,34 +62,16 @@ function computeSafeZoom(frame: Frame, desiredZoom: number): number {
   return Number.isFinite(safeZoom) && safeZoom > 0 ? safeZoom : 1;
 }
 
-// Safe zoom for the stacked final lockup during the holding phase: the
-// largest scale that keeps the whole two-line block inside the viewport
-// bounds, capped below 1 so the settle always *grows* into the resting
-// layout (a zoom-in-to-fit) rather than shrinking past it.
-function computeStackedSafeZoom(): number {
-  if (typeof window === "undefined") return 1;
-
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const { width, height } = stackedWordmarkSize(vw);
-  if (width <= 0 || height <= 0) return 1;
-
-  const zoomLimitByWidth = (vw * MAX_WIDTH_RATIO) / width;
-  const zoomLimitByHeight = (vh * MAX_HEIGHT_RATIO) / height;
-
-  const safeZoom = Math.min(1, zoomLimitByWidth, zoomLimitByHeight);
-  return Number.isFinite(safeZoom) && safeZoom > 0 ? safeZoom : 1;
-}
-
 // cycling: playing through fonts/logos, zoomed in.
-// holding: landed on the stacked lockup, still shrunken, brief pause.
-// settling: scales down to actual size — still fully opaque, so nothing
-//   underneath is visible yet. This has to finish *before* any fade starts,
-//   otherwise the shrinking overlay copy and the static one underneath are
-//   different sizes at the same time and it reads as the image swapping.
-// revealing: now that the overlay copy is pixel-identical to the real one
-//   beneath it, only the white background fades — invisible handoff.
-type Phase = "cycling" | "holding" | "settling" | "revealing";
+// settling: the stacked lockup mounts at STACKED_HANDOFF_SCALE — where its
+//   "WEST" line is exactly as tall as the cycle frames were, so the swap
+//   reads as just another flip beat — then grows into the resting layout.
+// holding: at full size, brief pause on white before the fade.
+// revealing: the overlay copy is now pixel-identical to the real wordmark
+//   beneath it, so only the white background fades — invisible handoff. The
+//   grow has to fully finish *before* any fade starts, otherwise two
+//   different-sized copies overlap mid-fade and it reads as a swap.
+type Phase = "cycling" | "settling" | "holding" | "revealing";
 
 type IntroOverlayProps = {
   // Fires once, telling the page whether the full cycle actually played
@@ -142,10 +124,13 @@ export default function IntroOverlay({ onComplete }: IntroOverlayProps) {
       frame += 1;
       if (frame >= cycleFrames.length) {
         clearInterval(cycleId);
-        setPhase("holding");
+        // Grow first (settling), then pause at full size (holding), then
+        // fade — the swap to the lockup lands on the same beat the next
+        // flip would have.
+        setPhase("settling");
         timers.push(
           setTimeout(() => {
-            setPhase("settling");
+            setPhase("holding");
             timers.push(
               setTimeout(() => {
                 setPhase("revealing");
@@ -163,9 +148,9 @@ export default function IntroOverlay({ onComplete }: IntroOverlayProps) {
                     }
                   }, REVEAL_MS),
                 );
-              }, SETTLE_MS),
+              }, HOLD_MS),
             );
-          }, HOLD_MS),
+          }, SETTLE_MS),
         );
         return;
       }
@@ -186,16 +171,7 @@ export default function IntroOverlay({ onComplete }: IntroOverlayProps) {
   if (!visible) return null;
 
   const cycling = phase === "cycling";
-  const settledScale = phase === "settling" || phase === "revealing";
   const revealing = phase === "revealing";
-  // Computed fresh every render (not a separate effect/listener) — always
-  // correct for the current frame and current viewport, nothing to fall out
-  // of sync. Only matters pre-settle; once settled the target is always 1.
-  const zoomScale = settledScale
-    ? 1
-    : cycling
-      ? computeSafeZoom(cycleFrames[index], ZOOM_IN_SCALE)
-      : computeStackedSafeZoom();
 
   return (
     <motion.div
@@ -205,20 +181,33 @@ export default function IntroOverlay({ onComplete }: IntroOverlayProps) {
       style={{ pointerEvents: revealing ? "none" : "auto" }}
     >
       <div className="px-6 pt-28 md:px-10 md:pt-36">
-        <motion.div
-          style={{ transformOrigin: "top left" }}
-          animate={{ scale: zoomScale }}
-          transition={{
-            duration: settledScale ? SETTLE_MS / 1000 : 0,
-            ease: [0.16, 1, 0.3, 1],
-          }}
-        >
-          {cycling ? (
+        {cycling ? (
+          // Safe zoom computed fresh every render (no effect/listener) —
+          // always correct for the current frame and current viewport.
+          <motion.div
+            key="cycle"
+            style={{ transformOrigin: "top left" }}
+            animate={{
+              scale: computeSafeZoom(cycleFrames[index], ZOOM_IN_SCALE),
+            }}
+            transition={{ duration: 0 }}
+          >
             <BigWordmarkGlyph frame={cycleFrames[index]} />
-          ) : (
+          </motion.div>
+        ) : (
+          // Keyed separately so it mounts fresh at the handoff scale (where
+          // its "WEST" line matches the cycle frames' height) and grows once
+          // to full size — a continuous swell out of the flip, no size jump.
+          <motion.div
+            key="final"
+            style={{ transformOrigin: "top left" }}
+            initial={{ scale: STACKED_HANDOFF_SCALE }}
+            animate={{ scale: 1 }}
+            transition={{ duration: SETTLE_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
+          >
             <BigStackedWordmark />
-          )}
-        </motion.div>
+          </motion.div>
+        )}
       </div>
     </motion.div>
   );

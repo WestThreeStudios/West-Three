@@ -73,21 +73,16 @@ export const FRAME_MS = 220;
 // aspects above — remeasure if font/weight/tracking/copy ever changes).
 // "WEST" at 3.09 is almost exactly the ratio of wakawaka.world's giant
 // "Waka" headings (3.15), which is what makes the lockup feel that big.
+// The 3.086 / 3.677 values are also baked into BigStackedWordmark's
+// text-[calc(...)] classNames below — keep them in sync.
 const WEST_ASPECT = 3.086;
-const THREE_ASPECT = 3.677;
+const FULL_LINE_ASPECT = 6.93; // "WEST THREE" on one line — the cycle frames
 
-// Geometry of the stacked lockup at rest for the current viewport — used by
-// IntroOverlay's safe-zoom math. Line-heights must match BigStackedWordmark.
-export function stackedWordmarkSize(vw: number) {
-  const sectionPaddingPx = vw >= 768 ? 80 : 48;
-  const contentWidth = vw - sectionPaddingPx;
-  return {
-    width: contentWidth,
-    height:
-      0.84 * (contentWidth / WEST_ASPECT) +
-      0.84 * (contentWidth / THREE_ASPECT),
-  };
-}
+// The scale at which the stacked lockup's "WEST" line is exactly as tall as
+// the single-line cycle frames' text. IntroOverlay starts the final grow
+// from here, so the flip hands off into the lockup at matched size instead
+// of jumping — then it swells to full scale as its own beat.
+export const STACKED_HANDOFF_SCALE = WEST_ASPECT / FULL_LINE_ASPECT;
 
 function FrameContent({ frame }: { frame: Frame }) {
   return frame.type === "text" ? (

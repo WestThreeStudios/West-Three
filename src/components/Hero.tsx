@@ -140,16 +140,18 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
         >
           {works.map((work, i) => {
             // The active item is already shown large in the preview next to
-            // this column — skip its thumbnail so the same piece never
-            // displays twice at once.
-            if (i === active) return null;
+            // this column — hide its thumbnail so the same piece never
+            // displays twice at once. display:none rather than unmounting:
+            // the img stays loaded and decoded, so hovering between works
+            // swaps instantly instead of flashing white while it refetches.
+            const hiddenClass = i === active ? "hidden" : "";
 
             return work.href ? (
               <Link
                 key={work.id}
                 href={work.href}
                 onMouseEnter={() => setActive(i)}
-                className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-ink/5 text-center transition-colors"
+                className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-ink/5 text-center transition-colors ${hiddenClass}`}
               >
                 <motion.div
                   className="absolute inset-0"
@@ -173,7 +175,7 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
                 key={work.id}
                 type="button"
                 onMouseEnter={() => setActive(i)}
-                className="flex aspect-[4/3] items-center justify-center border border-dashed border-ink/20 p-4 text-center transition-colors hover:border-ink/40"
+                className={`flex aspect-[4/3] items-center justify-center border border-dashed border-ink/20 p-4 text-center transition-colors hover:border-ink/40 ${hiddenClass}`}
               >
                 <span className="font-body text-[11px] uppercase tracking-[0.1em] text-ink/50">
                   {work.label}
@@ -197,14 +199,24 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
                 className="absolute inset-0"
                 {...imageRevealProps(phase, 0.45)}
               >
-                <Image
-                  src={activeWork.image!}
-                  alt={activeWork.label}
-                  fill
-                  sizes="(min-width: 768px) 56vw, 100vw"
-                  className="object-contain"
-                  priority
-                />
+                {/* All three preview images stay mounted, stacked, with only
+                    the active one opaque — swapping src on a single img
+                    forces a refetch of the preview-size variant on every
+                    hover, which flashed white while it loaded. Kept loaded,
+                    the switch is an instant soft crossfade instead. */}
+                {works.map((work, i) => (
+                  <Image
+                    key={work.id}
+                    src={work.image!}
+                    alt={work.label}
+                    fill
+                    sizes="(min-width: 768px) 56vw, 100vw"
+                    className={`object-contain transition-opacity duration-200 ${
+                      i === active ? "opacity-100" : "opacity-0"
+                    }`}
+                    priority
+                  />
+                ))}
               </motion.div>
               <span className="absolute bottom-4 left-4 rounded-full bg-white/90 px-3 py-1.5 font-body text-xs uppercase tracking-[0.1em] text-ink">
                 {activeWork.label}
