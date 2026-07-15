@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import {
   cycleFrames,
-  FINAL_FRAME,
+  FINAL_TEXT_FRAME,
   FRAME_MS,
-  WordmarkGlyph,
+  BigWordmarkGlyph,
   type Frame,
 } from "./FlipWordmark";
 
@@ -37,11 +37,11 @@ function computeSafeZoom(frame: Frame, desiredZoom: number): number {
 
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const rootPx = 16;
-  const baseFontSizePx = Math.min(
-    Math.max(3.5 * rootPx, 0.13 * vw),
-    11 * rootPx,
-  );
+  // Mirrors BigWordmarkGlyph's CSS exactly: (100vw − section padding) ÷ the
+  // final wordmark's 6.93 aspect, with padding 3rem below the md breakpoint
+  // and 5rem at/above it. Must stay in sync with that className.
+  const sectionPaddingPx = vw >= 768 ? 80 : 48;
+  const baseFontSizePx = (vw - sectionPaddingPx) / 6.93;
   const heightAtRest = (frame.scale ?? 1) * baseFontSizePx;
   const aspect =
     frame.type === "logo"
@@ -165,7 +165,7 @@ export default function IntroOverlay({ onComplete }: IntroOverlayProps) {
 
   if (!visible) return null;
 
-  const frame = phase === "cycling" ? cycleFrames[index] : FINAL_FRAME;
+  const frame = phase === "cycling" ? cycleFrames[index] : FINAL_TEXT_FRAME;
   const settledScale = phase === "settling" || phase === "revealing";
   const revealing = phase === "revealing";
   // Computed fresh every render (not a separate effect/listener) — always
@@ -189,7 +189,7 @@ export default function IntroOverlay({ onComplete }: IntroOverlayProps) {
             ease: [0.16, 1, 0.3, 1],
           }}
         >
-          <WordmarkGlyph frame={frame} />
+          <BigWordmarkGlyph frame={frame} />
         </motion.div>
       </div>
     </motion.div>

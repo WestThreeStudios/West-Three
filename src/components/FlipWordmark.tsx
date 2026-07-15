@@ -37,7 +37,8 @@ export type Frame =
     }
   | { type: "logo"; src: string; width: number; height: number; scale?: number };
 
-// Played once, in order, by IntroOverlay — then it lands on FINAL_FRAME (the real logo).
+// Played once, in order, by IntroOverlay — then it lands on FINAL_TEXT_FRAME
+// (the giant edge-to-edge text wordmark).
 // Each text frame's `aspect` is the real measured value for that exact
 // className + scale combination (see src/app/debug-frames) — recompute it
 // there if the frame's font, weight, scale, or copy ever changes.
@@ -55,12 +56,25 @@ export const cycleFrames: Frame[] = [
   { type: "text", className: abril.className, scale: 0.95, aspect: 5.06 },
 ];
 
+// The black bubble logo — lives only at the bottom of the landing page now
+// (via StaticWordmark); the intro no longer finishes on it.
 export const FINAL_FRAME: Frame = {
   type: "logo",
   src: "/logos/flip-bubble.png",
   width: 1590,
   height: 987,
   scale: 1.25,
+};
+
+// What the intro settles on instead: the plain display-font wordmark, blown
+// up by BigWordmarkGlyph to span the content area edge to edge — the same
+// move as wakawaka.world's giant "Waka" headings. Same measured aspect as
+// the first cycle frame (identical font/weight/copy).
+export const FINAL_TEXT_FRAME: Frame = {
+  type: "text",
+  className: "font-display font-black",
+  caps: true,
+  aspect: 6.93,
 };
 
 export const FRAME_MS = 220;
@@ -111,4 +125,26 @@ export function WordmarkGlyph({ frame }: { frame: Frame }) {
 
 export function StaticWordmark() {
   return <WordmarkGlyph frame={FINAL_FRAME} />;
+}
+
+// Full-bleed variant: font size is derived from the viewport minus the
+// section padding (px-6 → 3rem total, md:px-10 → 5rem total) divided by the
+// wordmark's measured 6.93 aspect, so "WEST THREE" spans the content area
+// edge to edge at any viewport — wakawaka.world's giant-heading move. The
+// intro overlay renders its frames inside this same shell so its settle
+// lands pixel-perfectly on the Hero's copy.
+export function BigWordmarkGlyph({ frame }: { frame: Frame }) {
+  return (
+    <h1
+      aria-label="West Three"
+      className="relative flex select-none items-center text-ink text-[calc((100vw-3rem)/6.93)] md:text-[calc((100vw-5rem)/6.93)]"
+      style={{ height: "1.1em" }}
+    >
+      <FrameContent frame={frame} />
+    </h1>
+  );
+}
+
+export function BigStaticWordmark() {
+  return <BigWordmarkGlyph frame={FINAL_TEXT_FRAME} />;
 }

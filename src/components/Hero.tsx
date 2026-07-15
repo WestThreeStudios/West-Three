@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { StaticWordmark } from "./FlipWordmark";
+import { BigStaticWordmark, StaticWordmark } from "./FlipWordmark";
 
 const works = [
   {
@@ -55,12 +55,31 @@ const galleryVariants = {
   visible: { opacity: 1, y: 0, scale: 1 },
 };
 
-function galleryTransition(phase: HeroPhase, delay = 0) {
-  if (phase !== "animate") return { duration: 0 };
-  return { duration: 0.9, ease: [0.16, 1, 0.3, 1] as const, delay };
+// The gallery blocks are keyed on `phase` (key passed directly in JSX —
+// React ignores keys inside spreads), so when it resolves
+// (pending → instant/animate) they remount rather than transition:
+// "instant" then renders directly at rest (initial={false}) with no
+// dependence on a runtime animation ever firing, and "animate" plays the
+// mount animation from `hidden`. Transitioning the existing element on a
+// prop flip proved fragile — a dropped animation tick left the gallery
+// permanently stuck at opacity 0.
+function galleryMotionProps(phase: HeroPhase, delay = 0) {
+  return {
+    variants: galleryVariants,
+    initial: phase === "animate" ? ("hidden" as const) : false,
+    animate:
+      phase === "pending" ? ("hidden" as const) : ("visible" as const),
+    transition:
+      phase === "animate"
+        ? { duration: 0.9, ease: [0.16, 1, 0.3, 1] as const, delay }
+        : { duration: 0 },
+  };
 }
 
-function Wordmark({ delay = 0 }: { delay?: number }) {
+// Top of the page gets the giant edge-to-edge text wordmark (what the intro
+// overlay settles onto); the bottom keeps the black bubble logo — that logo
+// only appears there now.
+function Wordmark({ delay = 0, big = false }: { delay?: number; big?: boolean }) {
   return (
     <motion.div
       initial="hidden"
@@ -69,7 +88,7 @@ function Wordmark({ delay = 0 }: { delay?: number }) {
       variants={fadeUp}
       transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1], delay }}
     >
-      <StaticWordmark />
+      {big ? <BigStaticWordmark /> : <StaticWordmark />}
     </motion.div>
   );
 }
@@ -81,7 +100,7 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
 
   return (
     <section className="bg-white px-6 pt-28 pb-20 md:px-10 md:pt-36">
-      <Wordmark />
+      <Wordmark big />
 
       <div
         className="relative mt-10 grid grid-cols-1 gap-6 overflow-x-hidden md:mt-14 md:grid-cols-[1fr_1.4fr]"
@@ -96,10 +115,8 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
         onMouseLeave={() => setCursor((c) => ({ ...c, visible: false }))}
       >
         <motion.div
-          initial="hidden"
-          animate={phase === "pending" ? "hidden" : "visible"}
-          variants={galleryVariants}
-          transition={galleryTransition(phase)}
+          key={`thumbs-${phase}`}
+          {...galleryMotionProps(phase)}
           className="order-2 flex flex-col gap-4 md:order-1"
         >
           {works.map((work, i) => {
@@ -143,10 +160,8 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
         </motion.div>
 
         <motion.div
-          initial="hidden"
-          animate={phase === "pending" ? "hidden" : "visible"}
-          variants={galleryVariants}
-          transition={galleryTransition(phase, phase === "animate" ? 0.08 : 0)}
+          key={`preview-${phase}`}
+          {...galleryMotionProps(phase, 0.08)}
           className="order-1 md:order-2"
         >
           {activeWork.href ? (
