@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import {
   cycleFrames,
-  FINAL_TEXT_FRAME,
   FRAME_MS,
   BigWordmarkGlyph,
+  BigStackedWordmark,
+  stackedWordmarkSize,
   type Frame,
 } from "./FlipWordmark";
 
@@ -61,8 +62,27 @@ function computeSafeZoom(frame: Frame, desiredZoom: number): number {
   return Number.isFinite(safeZoom) && safeZoom > 0 ? safeZoom : 1;
 }
 
+// Safe zoom for the stacked final lockup during the holding phase: the
+// largest scale that keeps the whole two-line block inside the viewport
+// bounds, capped below 1 so the settle always *grows* into the resting
+// layout (a zoom-in-to-fit) rather than shrinking past it.
+function computeStackedSafeZoom(): number {
+  if (typeof window === "undefined") return 1;
+
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const { width, height } = stackedWordmarkSize(vw);
+  if (width <= 0 || height <= 0) return 1;
+
+  const zoomLimitByWidth = (vw * MAX_WIDTH_RATIO) / width;
+  const zoomLimitByHeight = (vh * MAX_HEIGHT_RATIO) / height;
+
+  const safeZoom = Math.min(1, zoomLimitByWidth, zoomLimitByHeight);
+  return Number.isFinite(safeZoom) && safeZoom > 0 ? safeZoom : 1;
+}
+
 // cycling: playing through fonts/logos, zoomed in.
-// holding: landed on the real logo, still zoomed in, brief pause.
+// holding: landed on the stacked lockup, still shrunken, brief pause.
 // settling: scales down to actual size — still fully opaque, so nothing
 //   underneath is visible yet. This has to finish *before* any fade starts,
 //   otherwise the shrinking overlay copy and the static one underneath are
@@ -165,13 +185,17 @@ export default function IntroOverlay({ onComplete }: IntroOverlayProps) {
 
   if (!visible) return null;
 
-  const frame = phase === "cycling" ? cycleFrames[index] : FINAL_TEXT_FRAME;
+  const cycling = phase === "cycling";
   const settledScale = phase === "settling" || phase === "revealing";
   const revealing = phase === "revealing";
   // Computed fresh every render (not a separate effect/listener) — always
   // correct for the current frame and current viewport, nothing to fall out
   // of sync. Only matters pre-settle; once settled the target is always 1.
-  const zoomScale = settledScale ? 1 : computeSafeZoom(frame, ZOOM_IN_SCALE);
+  const zoomScale = settledScale
+    ? 1
+    : cycling
+      ? computeSafeZoom(cycleFrames[index], ZOOM_IN_SCALE)
+      : computeStackedSafeZoom();
 
   return (
     <motion.div
@@ -189,7 +213,11 @@ export default function IntroOverlay({ onComplete }: IntroOverlayProps) {
             ease: [0.16, 1, 0.3, 1],
           }}
         >
-          <BigWordmarkGlyph frame={frame} />
+          {cycling ? (
+            <BigWordmarkGlyph frame={cycleFrames[index]} />
+          ) : (
+            <BigStackedWordmark />
+          )}
         </motion.div>
       </div>
     </motion.div>

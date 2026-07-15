@@ -66,18 +66,28 @@ export const FINAL_FRAME: Frame = {
   scale: 1.25,
 };
 
-// What the intro settles on instead: the plain display-font wordmark, blown
-// up by BigWordmarkGlyph to span the content area edge to edge — the same
-// move as wakawaka.world's giant "Waka" headings. Same measured aspect as
-// the first cycle frame (identical font/weight/copy).
-export const FINAL_TEXT_FRAME: Frame = {
-  type: "text",
-  className: "font-display font-black",
-  caps: true,
-  aspect: 6.93,
-};
-
 export const FRAME_MS = 220;
+
+// Measured width÷font-size ratios of each stacked-lockup line in the display
+// font at tracking -0.02em (probed in-browser, same method as the frame
+// aspects above — remeasure if font/weight/tracking/copy ever changes).
+// "WEST" at 3.09 is almost exactly the ratio of wakawaka.world's giant
+// "Waka" headings (3.15), which is what makes the lockup feel that big.
+const WEST_ASPECT = 3.086;
+const THREE_ASPECT = 3.677;
+
+// Geometry of the stacked lockup at rest for the current viewport — used by
+// IntroOverlay's safe-zoom math. Line-heights must match BigStackedWordmark.
+export function stackedWordmarkSize(vw: number) {
+  const sectionPaddingPx = vw >= 768 ? 80 : 48;
+  const contentWidth = vw - sectionPaddingPx;
+  return {
+    width: contentWidth,
+    height:
+      0.84 * (contentWidth / WEST_ASPECT) +
+      0.84 * (contentWidth / THREE_ASPECT),
+  };
+}
 
 function FrameContent({ frame }: { frame: Frame }) {
   return frame.type === "text" ? (
@@ -145,6 +155,23 @@ export function BigWordmarkGlyph({ frame }: { frame: Frame }) {
   );
 }
 
-export function BigStaticWordmark() {
-  return <BigWordmarkGlyph frame={FINAL_TEXT_FRAME} />;
+// The Waka-scale resting wordmark: "WEST" over "THREE", each line's font
+// size derived from the content width over its measured aspect so both
+// lines span edge to edge — per-word full-bleed, like wakawaka.world's
+// stacked giant "Waka" headings. The intro overlay renders this exact
+// component for its settle, so it lands pixel-perfectly on the Hero's copy.
+export function BigStackedWordmark() {
+  return (
+    <h1
+      aria-label="West Three"
+      className="font-display select-none text-ink font-black"
+    >
+      <span className="block leading-[0.84] whitespace-nowrap tracking-[-0.02em] text-[calc((100vw-3rem)/3.086)] md:text-[calc((100vw-5rem)/3.086)]">
+        WEST
+      </span>
+      <span className="block leading-[0.84] whitespace-nowrap tracking-[-0.02em] text-[calc((100vw-3rem)/3.677)] md:text-[calc((100vw-5rem)/3.677)]">
+        THREE
+      </span>
+    </h1>
+  );
 }

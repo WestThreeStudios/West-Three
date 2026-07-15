@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { BigStaticWordmark, StaticWordmark } from "./FlipWordmark";
+import { BigStackedWordmark, StaticWordmark } from "./FlipWordmark";
 
 const works = [
   {
@@ -76,6 +76,25 @@ function galleryMotionProps(phase: HeroPhase, delay = 0) {
   };
 }
 
+// Second stage of the wakawaka-style reveal: the boxes slide up first as
+// empty layout (placeholder background showing), then each image fades in
+// and settles from a slight over-zoom to fit its box. Lives inside the
+// phase-keyed gallery blocks, so it mounts with the phase already resolved:
+// "animate" plays the reveal, anything else renders at rest immediately.
+function imageRevealProps(phase: HeroPhase, delay = 0) {
+  if (phase !== "animate") {
+    return { initial: false as const, animate: { opacity: 1, scale: 1 } };
+  }
+  return {
+    initial: { opacity: 0, scale: 1.18 },
+    animate: { opacity: 1, scale: 1 },
+    transition: {
+      opacity: { duration: 0.5, delay, ease: "easeOut" as const },
+      scale: { duration: 1.3, delay, ease: [0.16, 1, 0.3, 1] as const },
+    },
+  };
+}
+
 // Top of the page gets the giant edge-to-edge text wordmark (what the intro
 // overlay settles onto); the bottom keeps the black bubble logo — that logo
 // only appears there now.
@@ -88,7 +107,7 @@ function Wordmark({ delay = 0, big = false }: { delay?: number; big?: boolean })
       variants={fadeUp}
       transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1], delay }}
     >
-      {big ? <BigStaticWordmark /> : <StaticWordmark />}
+      {big ? <BigStackedWordmark /> : <StaticWordmark />}
     </motion.div>
   );
 }
@@ -130,16 +149,21 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
                 key={work.id}
                 href={work.href}
                 onMouseEnter={() => setActive(i)}
-                className="relative flex aspect-[4/3] items-center justify-center overflow-hidden text-center transition-colors"
+                className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-ink/5 text-center transition-colors"
               >
-                <Image
-                  src={work.image!}
-                  alt={work.label}
-                  fill
-                  sizes="(min-width: 768px) 33vw, 100vw"
-                  className="object-cover"
-                  style={{ objectPosition: work.thumbPosition }}
-                />
+                <motion.div
+                  className="absolute inset-0"
+                  {...imageRevealProps(phase, 0.55 + i * 0.12)}
+                >
+                  <Image
+                    src={work.image!}
+                    alt={work.label}
+                    fill
+                    sizes="(min-width: 768px) 33vw, 100vw"
+                    className="object-cover"
+                    style={{ objectPosition: work.thumbPosition }}
+                  />
+                </motion.div>
                 <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2.5 py-1 font-body text-[10px] uppercase tracking-[0.1em] text-ink">
                   {work.label}
                 </span>
@@ -169,14 +193,19 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
               href={activeWork.href}
               className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-ink/5 md:aspect-auto md:h-full md:min-h-[420px]"
             >
-              <Image
-                src={activeWork.image!}
-                alt={activeWork.label}
-                fill
-                sizes="(min-width: 768px) 56vw, 100vw"
-                className="object-contain"
-                priority
-              />
+              <motion.div
+                className="absolute inset-0"
+                {...imageRevealProps(phase, 0.45)}
+              >
+                <Image
+                  src={activeWork.image!}
+                  alt={activeWork.label}
+                  fill
+                  sizes="(min-width: 768px) 56vw, 100vw"
+                  className="object-contain"
+                  priority
+                />
+              </motion.div>
               <span className="absolute bottom-4 left-4 rounded-full bg-white/90 px-3 py-1.5 font-body text-xs uppercase tracking-[0.1em] text-ink">
                 {activeWork.label}
               </span>
