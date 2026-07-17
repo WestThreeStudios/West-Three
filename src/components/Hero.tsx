@@ -117,6 +117,19 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
   const [cursor, setCursor] = useState({ x: 0, y: 0, visible: false });
   const activeWork = works[active];
 
+  // Two fixed thumbnail slots, always the same two DOM elements — never
+  // added, removed, or reordered. Only which work-index each slot points at
+  // changes. Earlier this hid the active work's box with display:none,
+  // which reflowed the remaining boxes into new positions on every hover;
+  // if a different box ended up under the still-stationary mouse it fired
+  // its own mouseenter, flipping `active` again, and so on — that's the
+  // "glitches between two photos" bug. A brief attempt at animating that
+  // reflow with Motion's `layout` prop made it worse: `layout` computes its
+  // transform from the element's last measured box, and a display:none
+  // element measures as zero-size, so the box animated in from garbage
+  // coordinates. Fixed slots have no reflow to begin with.
+  const slotWorkIndexes = [1, 2].map((offset) => (active + offset) % works.length);
+
   return (
     <section className="bg-white px-6 pt-28 pb-20 md:px-10 md:pt-36">
       <Wordmark big />
@@ -138,33 +151,37 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
           {...galleryMotionProps(phase)}
           className="order-2 flex flex-col gap-4 md:order-1"
         >
-          {works.map((work, i) => {
-            // The active item is already shown large in the preview next to
-            // this column — hide its thumbnail so the same piece never
-            // displays twice at once. display:none rather than unmounting:
-            // the img stays loaded and decoded, so hovering between works
-            // swaps instantly instead of flashing white while it refetches.
-            const hiddenClass = i === active ? "hidden" : "";
+          {slotWorkIndexes.map((workIndex, slot) => {
+            const work = works[workIndex];
 
             return work.href ? (
               <Link
-                key={work.id}
+                key={`slot-${slot}`}
                 href={work.href}
-                onMouseEnter={() => setActive(i)}
-                className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-ink/5 text-center transition-colors ${hiddenClass}`}
+                onMouseEnter={() => setActive(workIndex)}
+                className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-ink/5 text-center transition-colors"
               >
                 <motion.div
                   className="absolute inset-0"
-                  {...imageRevealProps(phase, 0.55 + i * 0.12)}
+                  {...imageRevealProps(phase, 0.55 + slot * 0.12)}
                 >
-                  <Image
-                    src={work.image!}
-                    alt={work.label}
-                    fill
-                    sizes="(min-width: 768px) 33vw, 100vw"
-                    className="object-cover"
-                    style={{ objectPosition: work.thumbPosition }}
-                  />
+                  {/* All three images stay mounted and stacked in every
+                      slot (only the current one opaque) — same reasoning
+                      as the big preview below: swapping which work a fixed
+                      slot points to must never trigger a fresh image load. */}
+                  {works.map((w) => (
+                    <Image
+                      key={w.id}
+                      src={w.image!}
+                      alt={w.label}
+                      fill
+                      sizes="(min-width: 768px) 33vw, 100vw"
+                      className={`object-cover transition-opacity duration-200 ${
+                        w.id === work.id ? "opacity-100" : "opacity-0"
+                      }`}
+                      style={{ objectPosition: w.thumbPosition }}
+                    />
+                  ))}
                 </motion.div>
                 <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2.5 py-1 font-body text-[10px] uppercase tracking-[0.1em] text-ink">
                   {work.label}
@@ -172,10 +189,10 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
               </Link>
             ) : (
               <button
-                key={work.id}
+                key={`slot-${slot}`}
                 type="button"
-                onMouseEnter={() => setActive(i)}
-                className={`flex aspect-[4/3] items-center justify-center border border-dashed border-ink/20 p-4 text-center transition-colors hover:border-ink/40 ${hiddenClass}`}
+                onMouseEnter={() => setActive(workIndex)}
+                className="flex aspect-[4/3] items-center justify-center border border-dashed border-ink/20 p-4 text-center transition-colors hover:border-ink/40"
               >
                 <span className="font-body text-[11px] uppercase tracking-[0.1em] text-ink/50">
                   {work.label}
