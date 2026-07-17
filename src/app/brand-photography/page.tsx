@@ -1,10 +1,35 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import ImageCarousel from "@/components/ImageCarousel";
+import FolderMenu, { type Folder } from "@/components/FolderMenu";
 
 export const metadata: Metadata = {
   title: "Brand Photography",
 };
+
+const folders: Folder[] = [
+  {
+    id: "contact",
+    label: "Contact",
+    content:
+      "[Placeholder] Ready to book a portfolio session? Reach out and we'll get you scheduled — replace with real contact details once finalized.",
+    accents: ["#5a18f0", "#2c2cf5"],
+  },
+  {
+    id: "pricing",
+    label: "Pricing",
+    content:
+      "[Placeholder] Portfolio session packages and rates go here — replace with real pricing once finalized.",
+    accents: ["#ef2d3c", "#ff4d00"],
+  },
+  {
+    id: "more-info",
+    label: "More Info",
+    content:
+      "[Placeholder] What to expect, session length, and deliverables go here — replace with real copy once finalized.",
+    accents: ["#f8f858", "#2c2cf5"],
+  },
+];
 
 const images = [
   "/work/brand-photography/01.jpg",
@@ -43,6 +68,10 @@ export default function BrandPhotographyPage() {
 
       <div className="mt-16 md:mt-20">
         <ImageCarousel images={images} alt="Brand photography" />
+      </div>
+
+      <div className="mt-8">
+        <FolderMenu folders={folders} />
       </div>
     </div>
   );
