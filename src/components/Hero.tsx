@@ -120,28 +120,20 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
   // Fixed display rank — Brand, then Fashion, then Models — independent of
   // which one is active. Indices into `works` (whose own array order is
   // Brand, Models, Fashion, so this isn't the same as works' index order).
-  const DISPLAY_ORDER = [0, 2, 1];
-
-  // Two fixed thumbnail slots, always the same two DOM elements — never
-  // added, removed, or reordered. Which work-index each slot points at is
-  // DISPLAY_ORDER with the active one filtered out, so the two visible
-  // thumbnails always keep their same relative rank (Brand above Fashion
-  // above Models, whenever both are shown) — never swapping order based on
-  // which is active. An earlier version computed the two slots by rotating
-  // from `active` (offset math), which reassigned rank on every hover — the
-  // same photo could land in the top slot in one state and the bottom slot
-  // in another, reading as the thumbnails "switching places."
   //
-  // Separately: this used to hide the active work's box with display:none,
-  // which reflowed the remaining boxes into new positions on every hover —
-  // if a different box ended up under the still-stationary mouse it fired
-  // its own mouseenter, flipping `active` again, and so on (the "glitches
-  // between two photos" bug). A brief attempt at animating that reflow with
-  // Motion's `layout` prop made it worse: `layout` computes its transform
-  // from the element's last measured box, and a display:none element
-  // measures as zero-size, so the box animated in from garbage coordinates.
-  // Fixed slots have no reflow to begin with.
-  const slotWorkIndexes = DISPLAY_ORDER.filter((i) => i !== active);
+  // All three always render here, in this order, permanently — hovering
+  // only changes which one shows large in the preview next to this column;
+  // it no longer adds, removes, or reassigns anything in the thumbnail
+  // column itself. Earlier versions hid the active work's thumbnail (first
+  // via display:none, which reflowed the other two into new positions on
+  // every hover and could fire a spurious mouseenter on whichever box ended
+  // up under a still-stationary mouse; then via two rotating slots, which
+  // stopped the reflow but reassigned rank on every hover so a given photo
+  // could land in the top slot in one state and the bottom slot in
+  // another). Both read as glitching or "switching places." Static
+  // positions for all three removes the cause entirely — nothing about
+  // this column ever changes shape, order, or presence.
+  const DISPLAY_ORDER = [0, 2, 1];
 
   return (
     <section className="bg-white px-6 pt-28 pb-20 md:px-10 md:pt-36">
@@ -164,37 +156,31 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
           {...galleryMotionProps(phase)}
           className="order-2 flex flex-col gap-4 md:order-1"
         >
-          {slotWorkIndexes.map((workIndex, slot) => {
+          {DISPLAY_ORDER.map((workIndex, slot) => {
             const work = works[workIndex];
+            const isActive = workIndex === active;
 
             return work.href ? (
               <Link
-                key={`slot-${slot}`}
+                key={work.id}
                 href={work.href}
                 onMouseEnter={() => setActive(workIndex)}
-                className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-ink/5 text-center transition-colors"
+                className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-ink/5 text-center transition-shadow ${
+                  isActive ? "ring-2 ring-inset ring-ink" : ""
+                }`}
               >
                 <motion.div
                   className="absolute inset-0"
                   {...imageRevealProps(phase, 0.55 + slot * 0.12)}
                 >
-                  {/* All three images stay mounted and stacked in every
-                      slot (only the current one opaque) — same reasoning
-                      as the big preview below: swapping which work a fixed
-                      slot points to must never trigger a fresh image load. */}
-                  {works.map((w) => (
-                    <Image
-                      key={w.id}
-                      src={w.image!}
-                      alt={w.label}
-                      fill
-                      sizes="(min-width: 768px) 33vw, 100vw"
-                      className={`object-cover transition-opacity duration-200 ${
-                        w.id === work.id ? "opacity-100" : "opacity-0"
-                      }`}
-                      style={{ objectPosition: w.thumbPosition }}
-                    />
-                  ))}
+                  <Image
+                    src={work.image!}
+                    alt={work.label}
+                    fill
+                    sizes="(min-width: 768px) 33vw, 100vw"
+                    className="object-cover"
+                    style={{ objectPosition: work.thumbPosition }}
+                  />
                 </motion.div>
                 <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2.5 py-1 font-body text-[10px] uppercase tracking-[0.1em] text-ink">
                   {work.label}
@@ -202,10 +188,12 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
               </Link>
             ) : (
               <button
-                key={`slot-${slot}`}
+                key={work.id}
                 type="button"
                 onMouseEnter={() => setActive(workIndex)}
-                className="flex aspect-[4/3] items-center justify-center border border-dashed border-ink/20 p-4 text-center transition-colors hover:border-ink/40"
+                className={`flex aspect-[4/3] items-center justify-center border border-dashed border-ink/20 p-4 text-center transition-colors hover:border-ink/40 ${
+                  isActive ? "border-solid border-ink/50" : ""
+                }`}
               >
                 <span className="font-body text-[11px] uppercase tracking-[0.1em] text-ink/50">
                   {work.label}
