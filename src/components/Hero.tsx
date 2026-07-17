@@ -117,18 +117,31 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
   const [cursor, setCursor] = useState({ x: 0, y: 0, visible: false });
   const activeWork = works[active];
 
+  // Fixed display rank — Brand, then Fashion, then Models — independent of
+  // which one is active. Indices into `works` (whose own array order is
+  // Brand, Models, Fashion, so this isn't the same as works' index order).
+  const DISPLAY_ORDER = [0, 2, 1];
+
   // Two fixed thumbnail slots, always the same two DOM elements — never
-  // added, removed, or reordered. Only which work-index each slot points at
-  // changes. Earlier this hid the active work's box with display:none,
-  // which reflowed the remaining boxes into new positions on every hover;
+  // added, removed, or reordered. Which work-index each slot points at is
+  // DISPLAY_ORDER with the active one filtered out, so the two visible
+  // thumbnails always keep their same relative rank (Brand above Fashion
+  // above Models, whenever both are shown) — never swapping order based on
+  // which is active. An earlier version computed the two slots by rotating
+  // from `active` (offset math), which reassigned rank on every hover — the
+  // same photo could land in the top slot in one state and the bottom slot
+  // in another, reading as the thumbnails "switching places."
+  //
+  // Separately: this used to hide the active work's box with display:none,
+  // which reflowed the remaining boxes into new positions on every hover —
   // if a different box ended up under the still-stationary mouse it fired
-  // its own mouseenter, flipping `active` again, and so on — that's the
-  // "glitches between two photos" bug. A brief attempt at animating that
-  // reflow with Motion's `layout` prop made it worse: `layout` computes its
-  // transform from the element's last measured box, and a display:none
-  // element measures as zero-size, so the box animated in from garbage
-  // coordinates. Fixed slots have no reflow to begin with.
-  const slotWorkIndexes = [1, 2].map((offset) => (active + offset) % works.length);
+  // its own mouseenter, flipping `active` again, and so on (the "glitches
+  // between two photos" bug). A brief attempt at animating that reflow with
+  // Motion's `layout` prop made it worse: `layout` computes its transform
+  // from the element's last measured box, and a display:none element
+  // measures as zero-size, so the box animated in from garbage coordinates.
+  // Fixed slots have no reflow to begin with.
+  const slotWorkIndexes = DISPLAY_ORDER.filter((i) => i !== active);
 
   return (
     <section className="bg-white px-6 pt-28 pb-20 md:px-10 md:pt-36">
