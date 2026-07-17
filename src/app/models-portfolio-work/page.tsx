@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import ImageCarousel from "@/components/ImageCarousel";
-import FolderMenu from "@/components/FolderMenu";
+import FolderMenu, { type Folder } from "@/components/FolderMenu";
 
 export const metadata: Metadata = {
   title: "Models Portfolio Work",
@@ -12,24 +12,27 @@ const images = Array.from(
   (_, i) => `/work/models-portfolio/${String(i + 1).padStart(2, "0")}.jpg`,
 );
 
-const folders = [
+const folders: Folder[] = [
   {
     id: "contact",
     label: "Contact",
     content:
       "[Placeholder] Ready to book a portfolio session? Reach out and we'll get you scheduled — replace with real contact details once finalized.",
+    accents: ["#5a18f0", "#2c2cf5"],
   },
   {
     id: "pricing",
     label: "Pricing",
     content:
       "[Placeholder] Portfolio session packages and rates go here — replace with real pricing once finalized.",
+    accents: ["#ef2d3c", "#ff4d00"],
   },
   {
     id: "more-info",
     label: "More Info",
     content:
       "[Placeholder] What to expect, session length, and deliverables go here — replace with real copy once finalized.",
+    accents: ["#f8f858", "#2c2cf5"],
   },
 ];
 
