@@ -57,8 +57,11 @@ export default function ModelsPortfolioWorkPage() {
       </h1>
 
       <p className="mt-8 max-w-[52ch] font-body text-[1.05rem] leading-[1.75] text-ink/70">
-        [Placeholder] Studio portrait and portfolio-building session —
-        replace with real copy once finalized.
+        Whether you&apos;re building your first portfolio or expanding an
+        established one, I work with models to create the images your book
+        actually needs — new looks, new range, gaps filled. Every session
+        is planned around your goals. Reach out for pricing and to start
+        the conversation.
       </p>
 
       <div className="mt-16 md:mt-20">
