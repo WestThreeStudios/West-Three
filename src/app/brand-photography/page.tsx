@@ -63,7 +63,12 @@ export default function BrandPhotographyPage() {
       </h1>
 
       <p className="mt-8 max-w-[52ch] font-body text-[1.05rem] leading-[1.75] text-ink/70">
-        Product and lifestyle photography featuring Lonely Ghost apparel.
+        I work with brands of every size — from first launches to
+        established names — shooting editorial, professional, and media
+        content built to actually get used. Primarily studio-based, but
+        open to on-location when the project calls for it. Every job is a
+        conversation: reach out for pricing and let&apos;s figure out what
+        makes sense.
       </p>
 
       <div className="mt-16 md:mt-20">
