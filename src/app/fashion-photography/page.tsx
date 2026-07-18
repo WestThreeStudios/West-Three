@@ -60,8 +60,10 @@ export default function FashionPhotographyPage() {
       </h1>
 
       <p className="mt-8 max-w-[52ch] font-body text-[1.05rem] leading-[1.75] text-ink/70">
-        [Placeholder] Editorial styling session — replace with real copy
-        once finalized.
+        A collection of work exploring different styles, moods, and
+        stories through fashion. Always open to collaborating with hair
+        stylists, makeup artists, and fashion designers who want to build
+        something bold together.
       </p>
 
       <div className="mt-16 md:mt-20">
