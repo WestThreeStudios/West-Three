@@ -95,7 +95,16 @@ export default function DragGallery({
               draggable={false}
               // The gallery opens centered, so the middle photos are what's
               // on screen first — load those eagerly, not the strip's start.
-              priority={Math.abs(i - middle) <= 1}
+              loading={Math.abs(i - middle) <= 1 ? "eager" : "lazy"}
+              // Serve the originals straight from /public instead of going
+              // through /_next/image: the center (eager) images fire in the
+              // first instants of page load, and those earliest optimizer
+              // requests reproducibly wedged with no response on first hit
+              // — rendering the two middle frames permanently blank — while
+              // every later request succeeded. These are local, already
+              // web-sized JPEGs (~300KB), so the optimizer buys little here
+              // and static file serving can't hang.
+              unoptimized
             />
           </div>
         ))}
