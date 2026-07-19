@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import ImageCarousel from "@/components/ImageCarousel";
+import DragGallery from "@/components/DragGallery";
 import FolderMenu, { type Folder } from "@/components/FolderMenu";
 
 export const metadata: Metadata = {
@@ -65,7 +65,7 @@ export default function ModelsPortfolioWorkPage() {
       </p>
 
       <div className="mt-16 md:mt-20">
-        <ImageCarousel images={images} alt="Models portfolio work" />
+        <DragGallery images={images} alt="Models portfolio work" />
       </div>
 
       <div className="mt-8">
