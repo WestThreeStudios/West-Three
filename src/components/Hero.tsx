@@ -21,9 +21,10 @@ const works = [
     label: "Models Portfolio Work",
     image: "/work/models-portfolio/01.jpg",
     href: "/models-portfolio-work",
-    // Front-facing portrait from the white-tee session — anchor the crop
-    // high so his whole head fits with a little headroom above the hair.
-    thumbPosition: "center 10%",
+    // Front-facing close-up from the white-tee session — his head fills
+    // more of this tighter frame, so anchor a touch lower than a top crop
+    // to fit the whole head plus a little headroom.
+    thumbPosition: "center 20%",
   },
   {
     id: 3,
