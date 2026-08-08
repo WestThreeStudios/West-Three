@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 const images = Array.from(
-  { length: 12 },
+  { length: 7 },
   (_, i) => `/work/models-portfolio/${String(i + 1).padStart(2, "0")}.jpg`,
 );
 

@@ -19,11 +19,11 @@ const works = [
   {
     id: 2,
     label: "Models Portfolio Work",
-    image: "/work/models-portfolio/12.jpg",
+    image: "/work/models-portfolio/01.jpg",
     href: "/models-portfolio-work",
-    // Lots of headroom above him in this shot too — nudging further down
-    // than a plain top crop keeps the face + tattooed hand in frame.
-    thumbPosition: "center 35%",
+    // Front-facing portrait from the white-tee session — his face sits
+    // about a quarter of the way down the frame, so anchor the crop there.
+    thumbPosition: "center 25%",
   },
   {
     id: 3,
