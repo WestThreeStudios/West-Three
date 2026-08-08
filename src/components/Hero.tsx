@@ -6,11 +6,16 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { BigStackedWordmark, StaticWordmark } from "./FlipWordmark";
 
+// width/height are each image's real pixel dimensions — the big preview
+// renders the images intrinsically sized (not fill-cropped), so its black
+// border can hug the photo itself instead of a letterboxed container.
 const works = [
   {
     id: 1,
     label: "Brand Photography",
     image: "/work/brand-photography/03.jpg",
+    width: 1080,
+    height: 1620,
     href: "/brand-photography",
     // Both faces sit in the upper third of this shot — nudging up from
     // center keeps them in frame without cropping into the sweatshirt text.
@@ -20,6 +25,8 @@ const works = [
     id: 2,
     label: "Models Portfolio Work",
     image: "/work/models-portfolio/01.jpg",
+    width: 2560,
+    height: 3840,
     href: "/models-portfolio-work",
     // Front-facing close-up from the white-tee session — his head fills
     // more of this tighter frame, so anchor a touch lower than a top crop
@@ -30,6 +37,8 @@ const works = [
     id: 3,
     label: "Fashion Photography",
     image: "/work/fashion-photography/01.jpg",
+    width: 1080,
+    height: 1350,
     href: "/fashion-photography",
     // Black-and-white profile shot — face/glasses sit about a quarter of
     // the way down, with empty backdrop above and hair trailing below.
@@ -212,7 +221,7 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
           {activeWork.href ? (
             <Link
               href={activeWork.href}
-              className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-ink/5 md:aspect-auto md:h-full md:min-h-[420px]"
+              className="relative flex aspect-[4/5] items-center justify-center overflow-hidden md:aspect-auto md:h-full md:min-h-[420px]"
             >
               <motion.div
                 className="absolute inset-0"
@@ -222,15 +231,18 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
                     the active one opaque — swapping src on a single img
                     forces a refetch of the preview-size variant on every
                     hover, which flashed white while it loaded. Kept loaded,
-                    the switch is an instant soft crossfade instead. */}
+                    the switch is an instant soft crossfade instead.
+                    Intrinsically sized (not fill) and shrunk to fit, so the
+                    black border hugs the photo itself — no letterbox box. */}
                 {works.map((work, i) => (
                   <Image
                     key={work.id}
                     src={work.image!}
                     alt={work.label}
-                    fill
+                    width={work.width}
+                    height={work.height}
                     sizes="(min-width: 768px) 56vw, 100vw"
-                    className={`object-contain transition-opacity duration-200 ${
+                    className={`absolute inset-0 m-auto h-auto w-auto max-h-full max-w-full border-2 border-ink transition-opacity duration-200 ${
                       i === active ? "opacity-100" : "opacity-0"
                     }`}
                     priority
