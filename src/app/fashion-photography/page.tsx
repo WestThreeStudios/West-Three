@@ -12,21 +12,21 @@ const folders: Folder[] = [
     id: "contact",
     label: "Contact",
     content:
-      "[Placeholder] Ready to book a portfolio session? Reach out and we'll get you scheduled — replace with real contact details once finalized.",
+      "For bookings and inquiries: westthreestudio@gmail.com. Based in Phoenix, AZ — available for studio and on-location work.",
     accents: ["#5a18f0", "#2c2cf5"],
   },
   {
     id: "pricing",
     label: "Pricing",
     content:
-      "[Placeholder] Portfolio session packages and rates go here — replace with real pricing once finalized.",
+      "Rates are based on session length, number of looks/setups, and usage (personal portfolio vs. commercial/brand use). Tell me what you need at westthreestudio@gmail.com and I'll send a quote within a day or two.",
     accents: ["#ef2d3c", "#ff4d00"],
   },
   {
     id: "more-info",
     label: "More Info",
     content:
-      "[Placeholder] What to expect, session length, and deliverables go here — replace with real copy once finalized.",
+      "Every session includes professionally edited, high-resolution images delivered digitally. Turnaround is typically 3–5 business days. Prints and rush delivery available on request.",
     accents: ["#f8f858", "#2c2cf5"],
   },
 ];
