@@ -3,12 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-const navLinks = [
-  { href: "#portfolio", label: "Portfolio" },
-  { href: "#info", label: "Info" },
-  { href: "#contact", label: "Contact" },
-];
-
 const formatPhoenixTime = () =>
   new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
@@ -39,18 +33,6 @@ export default function Header() {
       >
         West Three
       </Link>
-
-      <nav className="hidden items-center gap-6 md:flex">
-        {navLinks.map((link) => (
-          <a
-            key={link.href}
-            href={link.href}
-            className="font-body text-xs uppercase tracking-[0.1em] text-white/80 transition-colors hover:text-white"
-          >
-            {link.label}
-          </a>
-        ))}
-      </nav>
 
       <div className="flex items-center gap-2 font-body text-xs uppercase tracking-[0.1em] text-white/80">
         <span suppressHydrationWarning>Phoenix, AZ {time}</span>
