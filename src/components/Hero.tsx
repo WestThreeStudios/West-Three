@@ -37,8 +37,8 @@ const works = [
     id: 3,
     label: "Fashion Photography",
     image: "/work/fashion-photography/01.jpg",
-    width: 1080,
-    height: 1350,
+    width: 2560,
+    height: 3200,
     href: "/fashion-photography",
     // Black-and-white profile shot — face/glasses sit about a quarter of
     // the way down, with empty backdrop above and hair trailing below.
