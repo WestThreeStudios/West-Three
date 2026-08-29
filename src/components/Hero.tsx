@@ -13,13 +13,13 @@ const works = [
   {
     id: 1,
     label: "Brand Photography",
-    image: "/work/brand-photography/03.jpg",
-    width: 1080,
-    height: 1620,
+    image: "/work/brand-photography/02.jpg",
+    width: 2560,
+    height: 3200,
     href: "/brand-photography",
-    // Both faces sit in the upper third of this shot — nudging up from
-    // center keeps them in frame without cropping into the sweatshirt text.
-    thumbPosition: "center 20%",
+    // Tight portrait — eyes/nose sit just above vertical center, so a
+    // slight upward nudge keeps the whole face in frame in the 4:3 crop.
+    thumbPosition: "center 30%",
   },
   {
     id: 2,
