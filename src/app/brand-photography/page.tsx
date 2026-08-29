@@ -31,16 +31,10 @@ const folders: Folder[] = [
   },
 ];
 
-const images = [
-  "/work/brand-photography/01.jpg",
-  "/work/brand-photography/02.jpg",
-  "/work/brand-photography/03.jpg",
-  "/work/brand-photography/04.jpg",
-  "/work/brand-photography/05.jpg",
-  "/work/brand-photography/06.jpg",
-  "/work/brand-photography/07.jpg",
-  "/work/brand-photography/08.jpg",
-];
+const images = Array.from(
+  { length: 12 },
+  (_, i) => `/work/brand-photography/${String(i + 1).padStart(2, "0")}.jpg`,
+);
 
 export default function BrandPhotographyPage() {
   return (
