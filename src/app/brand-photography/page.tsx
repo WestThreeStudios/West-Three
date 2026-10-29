@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import DragGallery from "@/components/DragGallery";
 import FolderMenu, { type Folder } from "@/components/FolderMenu";
+import SmoothScroll from "@/components/SmoothScroll";
+import StudioCollage from "@/components/StudioCollage";
 
 export const metadata: Metadata = {
   title: "Brand Photography",
@@ -39,6 +41,7 @@ const images = Array.from(
 export default function BrandPhotographyPage() {
   return (
     <div className="bg-white px-6 pt-28 pb-24 md:px-10 md:pt-36">
+      <SmoothScroll />
       <Link
         href="/"
         className="font-body text-xs uppercase tracking-[0.1em] text-ink/50 transition-colors hover:text-ink"
@@ -69,7 +72,9 @@ export default function BrandPhotographyPage() {
         <DragGallery images={images} alt="Brand photography" />
       </div>
 
-      <div className="mt-8">
+      <StudioCollage />
+
+      <div className="mt-16 md:mt-24">
         <FolderMenu folders={folders} />
       </div>
     </div>
