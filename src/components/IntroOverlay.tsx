@@ -1,92 +1,60 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "motion/react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { animate, motion } from "motion/react";
 import {
+  BigStackedWordmark,
   cycleFrames,
   FRAME_MS,
-  BigWordmarkGlyph,
-  BigStackedWordmark,
-  STACKED_HANDOFF_SCALE,
+  FrameContent,
   type Frame,
 } from "./FlipWordmark";
 
+const SETTLE_MS = 750;
 const HOLD_MS = 400;
-const SETTLE_MS = 550;
 const REVEAL_MS = 550;
-const ZOOM_IN_SCALE = 1.6;
 const STORAGE_KEY = "west-three-intro-played";
+const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
-// Safe bounds for the zoomed-in intro, as a fraction of the viewport —
-// leaves comfortable margin on every side, on both mobile and desktop.
-const MAX_WIDTH_RATIO = 0.86;
-const MAX_HEIGHT_RATIO = 0.46;
-// Fallback only, in case a future frame is added without its own measured
-// `aspect` — deliberately generous (wider than every current frame,
-// including the 8.3:1 Rubik Mono one) so it fails safe rather than overflows.
-const TEXT_ASPECT_FALLBACK = 9;
-
-// The four logo images vary wildly in shape (the widest is >8:1), and it
-// turns out several of the text frames are just as extreme once actually
-// measured (Rubik Mono comes in at 8.3:1 — wider than any of the logos) —
-// so a flat zoom multiplier can't work for all of them on every screen size.
-// This computes, per frame, the largest zoom that still fits both
-// dimensions, computed fresh on every render (no separate effect/listener,
-// so there's nothing to get out of sync or left dangling).
-function computeSafeZoom(frame: Frame, desiredZoom: number): number {
-  if (typeof window === "undefined") return desiredZoom;
-
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  // Mirrors BigWordmarkGlyph's CSS exactly: (100vw − section padding) ÷ the
-  // final wordmark's 6.93 aspect, with padding 3rem below the md breakpoint
-  // and 5rem at/above it. Must stay in sync with that className.
-  const sectionPaddingPx = vw >= 768 ? 80 : 48;
-  const baseFontSizePx = (vw - sectionPaddingPx) / 6.93;
-  const heightAtRest = (frame.scale ?? 1) * baseFontSizePx;
-  const aspect =
-    frame.type === "logo"
-      ? frame.width / frame.height
-      : (frame.aspect ?? TEXT_ASPECT_FALLBACK);
-  const widthAtRest = heightAtRest * aspect;
-
-  if (widthAtRest <= 0 || heightAtRest <= 0) return 1;
-
-  const maxWidth = vw * MAX_WIDTH_RATIO;
-  const maxHeight = vh * MAX_HEIGHT_RATIO;
-
-  const zoomLimitByWidth = maxWidth / widthAtRest;
-  const zoomLimitByHeight = maxHeight / heightAtRest;
-
-  const safeZoom = Math.min(desiredZoom, zoomLimitByWidth, zoomLimitByHeight);
-  return Number.isFinite(safeZoom) && safeZoom > 0 ? safeZoom : 1;
+// Each flip frame is sized in pure CSS — as large as fits within 86% of the
+// screen width and a target height — and centered with flexbox. Because it's
+// CSS, the server-rendered HTML is already the right size and dead-centre,
+// so there's no jump when the page's JavaScript loads, and every frame
+// shares the same centre no matter how wide its font or logo is.
+// (A frame's width is scale × aspect × font-size; its height scale × font-size.)
+function frameFontSize(frame: Frame): string {
+  const scale = frame.scale ?? 1;
+  const aspect = frame.type === "logo" ? frame.width / frame.height : frame.aspect;
+  return `min(calc(86vw / ${(scale * aspect).toFixed(3)}), calc(min(30vh, 15vw) / ${scale}))`;
 }
 
-// cycling: playing through fonts/logos, zoomed in.
-// settling: the stacked lockup mounts at STACKED_HANDOFF_SCALE — where its
-//   "WEST" line is exactly as tall as the cycle frames were, so the swap
-//   reads as just another flip beat — then grows into the resting layout.
-// holding: at full size, brief pause on white before the fade.
-// revealing: the overlay copy is now pixel-identical to the real wordmark
-//   beneath it, so only the white background fades — invisible handoff. The
-//   grow has to fully finish *before* any fade starts, otherwise two
-//   different-sized copies overlap mid-fade and it reads as a swap.
+// cycling: flipping through fonts/logos, centered on screen.
+// settling: the stacked lockup appears exactly where (and as big as) the last
+//   frame was, then glides and grows into its resting spot — the same spot
+//   the real wordmark occupies on the page underneath.
+// holding: brief pause at rest on white.
+// revealing: only the white fades; the overlay's lockup sits pixel-for-pixel
+//   on top of the page's own, so the handoff is invisible.
 type Phase = "cycling" | "settling" | "holding" | "revealing";
 
 type IntroOverlayProps = {
-  // Fires once, telling the page whether the full cycle actually played
-  // (fresh visit) or was skipped (already seen this session / reduced
-  // motion) — the caller uses this to decide whether its own reveal
-  // animations should run or just snap straight to their resting state.
+  // Fires once, telling the page whether the intro actually played (fresh
+  // visit) or was skipped (already seen this session / reduced motion), so
+  // its own reveal can either animate or snap straight to rest.
   onComplete?: (played: boolean) => void;
 };
 
 export default function IntroOverlay({ onComplete }: IntroOverlayProps) {
-  // Both start in the "playing" state on server and first client render —
+  // Both start in the "playing" state on the server and first client render —
   // resolved to skip (if already seen this session) only after mount below.
   const [visible, setVisible] = useState(true);
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("cycling");
+
+  const frameRef = useRef<HTMLDivElement>(null);
+  const lockupRef = useRef<HTMLDivElement>(null);
+  // Where the most recent flip frame sat on screen — the lockup starts here.
+  const lastFrameBox = useRef<DOMRect | null>(null);
 
   useEffect(() => {
     if (!visible) return;
@@ -104,9 +72,7 @@ export default function IntroOverlay({ onComplete }: IntroOverlayProps) {
     } catch {
       // sessionStorage unavailable (private mode, etc.) — just play the intro.
     }
-    const reduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     if (reduced || alreadyPlayed) {
       // Runs once after mount, post-hydration — server and client both start
@@ -117,98 +83,128 @@ export default function IntroOverlay({ onComplete }: IntroOverlayProps) {
       return;
     }
 
+    // The lockup has to land exactly on the page's own wordmark, which sits
+    // at the very top — so start from the top even if the browser restored
+    // an old scroll position on reload.
+    window.scrollTo(0, 0);
+
     let frame = 0;
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     const cycleId = setInterval(() => {
       frame += 1;
-      if (frame >= cycleFrames.length) {
-        clearInterval(cycleId);
-        // Grow first (settling), then pause at full size (holding), then
-        // fade — the swap to the lockup lands on the same beat the next
-        // flip would have.
-        setPhase("settling");
-        timers.push(
-          setTimeout(() => {
-            setPhase("holding");
-            timers.push(
-              setTimeout(() => {
-                setPhase("revealing");
-                // The white background starts fading right here — cue the
-                // page's own reveal (images sliding up + zooming to fit) so
-                // it plays as the overlay disappears, not after.
-                onComplete?.(true);
-                timers.push(
-                  setTimeout(() => {
-                    setVisible(false);
-                    try {
-                      sessionStorage.setItem(STORAGE_KEY, "1");
-                    } catch {
-                      // ignore
-                    }
-                  }, REVEAL_MS),
-                );
-              }, HOLD_MS),
-            );
-          }, SETTLE_MS),
-        );
+      if (frame < cycleFrames.length) {
+        setIndex(frame);
         return;
       }
-      setIndex(frame);
+      clearInterval(cycleId);
+      // The swap to the lockup lands on the beat the next flip would have.
+      setPhase("settling");
+      timers.push(
+        setTimeout(() => {
+          setPhase("holding");
+          timers.push(
+            setTimeout(() => {
+              setPhase("revealing");
+              // Cue the page's own reveal as the white starts fading.
+              onComplete?.(true);
+              timers.push(
+                setTimeout(() => {
+                  setVisible(false);
+                  try {
+                    sessionStorage.setItem(STORAGE_KEY, "1");
+                  } catch {
+                    // ignore
+                  }
+                }, REVEAL_MS),
+              );
+            }, HOLD_MS),
+          );
+        }, SETTLE_MS),
+      );
     }, FRAME_MS);
 
     return () => {
       clearInterval(cycleId);
       timers.forEach(clearTimeout);
     };
-    // Intentionally run once on mount only — onComplete comes from the
-    // parent as a fresh inline function on every render (it calls setState),
-    // so depending on it would re-run this whole effect (restarting the
-    // cycle) every time the parent re-renders after we call it.
+    // Intentionally run once on mount only — onComplete is a fresh inline
+    // function on every parent render, and depending on it would restart
+    // the cycle each time the parent re-renders after we call it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Remember each frame's on-screen box as it's shown.
+  useLayoutEffect(() => {
+    if (phase === "cycling" && frameRef.current) {
+      lastFrameBox.current = frameRef.current.getBoundingClientRect();
+    }
+  }, [index, phase]);
+
+  // The handoff (FLIP): measure the lockup at its resting spot, jump it —
+  // before the browser paints — to where and how big the last frame was,
+  // then animate it home.
+  useLayoutEffect(() => {
+    if (phase !== "settling") return;
+    const lockup = lockupRef.current;
+    if (!lockup) return;
+
+    const rest = lockup.getBoundingClientRect();
+    const firstLine = lockup.querySelector("span")?.getBoundingClientRect();
+    const from = lastFrameBox.current;
+
+    // Start with the lockup's "WEST" line as tall as the last frame was, and
+    // its centre on the last frame's centre (the middle of the screen).
+    const lineHeight = firstLine?.height || rest.height;
+    const startScale = from && lineHeight ? Math.min(1, from.height / lineHeight) : 0.4;
+    const startX = (from ? from.left + from.width / 2 : window.innerWidth / 2) - (rest.left + rest.width / 2);
+    const startY = (from ? from.top + from.height / 2 : window.innerHeight / 2) - (rest.top + rest.height / 2);
+
+    lockup.style.transformOrigin = "50% 50%";
+    lockup.style.transform = `translate(${startX}px, ${startY}px) scale(${startScale})`;
+
+    const controls = animate(
+      lockup,
+      { x: [startX, 0], y: [startY, 0], scale: [startScale, 1] },
+      { duration: SETTLE_MS / 1000, ease: EASE_OUT },
+    );
+    return () => controls.stop();
+  }, [phase]);
 
   if (!visible) return null;
 
   const cycling = phase === "cycling";
   const revealing = phase === "revealing";
+  const current = cycleFrames[index];
 
   return (
     <motion.div
+      // Decorative — the real, readable wordmark is on the page underneath.
+      aria-hidden="true"
       className="fixed inset-0 z-[100] overflow-hidden bg-white"
       animate={{ opacity: revealing ? 0 : 1 }}
       transition={{ duration: REVEAL_MS / 1000, ease: [0.4, 0, 0.2, 1] }}
       style={{ pointerEvents: revealing ? "none" : "auto" }}
     >
-      <div className="px-6 pt-28 md:px-10 md:pt-36">
-        {cycling ? (
-          // Safe zoom computed fresh every render (no effect/listener) —
-          // always correct for the current frame and current viewport.
-          <motion.div
-            key="cycle"
-            style={{ transformOrigin: "top left" }}
-            animate={{
-              scale: computeSafeZoom(cycleFrames[index], ZOOM_IN_SCALE),
-            }}
-            transition={{ duration: 0 }}
+      {cycling ? (
+        <div className="flex h-full w-full items-center justify-center">
+          <div
+            ref={frameRef}
+            className="flex select-none items-center text-ink"
+            style={{ fontSize: frameFontSize(current) }}
           >
-            <BigWordmarkGlyph frame={cycleFrames[index]} />
-          </motion.div>
-        ) : (
-          // Keyed separately so it mounts fresh at the handoff scale (where
-          // its "WEST" line matches the cycle frames' height) and grows once
-          // to full size — a continuous swell out of the flip, no size jump.
-          <motion.div
-            key="final"
-            style={{ transformOrigin: "top left" }}
-            initial={{ scale: STACKED_HANDOFF_SCALE }}
-            animate={{ scale: 1 }}
-            transition={{ duration: SETTLE_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
-          >
+            <FrameContent frame={current} />
+          </div>
+        </div>
+      ) : (
+        // Same padding as the homepage's top section, so at rest this lockup
+        // sits exactly over the page's own wordmark.
+        <div className="px-6 pt-28 md:px-10 md:pt-36">
+          <div ref={lockupRef}>
             <BigStackedWordmark />
-          </motion.div>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

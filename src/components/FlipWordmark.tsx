@@ -56,35 +56,24 @@ export const cycleFrames: Frame[] = [
   { type: "text", className: abril.className, scale: 0.95, aspect: 5.06 },
 ];
 
-// The black bubble logo — lives only at the bottom of the landing page now
-// (via StaticWordmark); the intro no longer finishes on it.
+// The "West Three Studios" logo — a cream brush-stroke W with two eyes on a
+// cobalt tile. Lives at the bottom of the landing page (via StaticWordmark).
+// It replaced the black bubble logo (public/logos/flip-bubble.png, still in
+// the repo if it's ever wanted back: 1590×987, scale 1.25).
 export const FINAL_FRAME: Frame = {
   type: "logo",
-  src: "/logos/flip-bubble.png",
-  width: 1590,
-  height: 987,
-  scale: 1.25,
+  src: "/logos/west-three-studios.png",
+  width: 1200,
+  height: 1200,
+  scale: 1.75,
 };
 
 export const FRAME_MS = 220;
 
-// Measured width÷font-size ratios of each stacked-lockup line in the display
-// font at tracking -0.02em (probed in-browser, same method as the frame
-// aspects above — remeasure if font/weight/tracking/copy ever changes).
-// "WEST" at 3.09 is almost exactly the ratio of wakawaka.world's giant
-// "Waka" headings (3.15), which is what makes the lockup feel that big.
-// The 3.086 / 3.677 values are also baked into BigStackedWordmark's
-// text-[calc(...)] classNames below — keep them in sync.
-const WEST_ASPECT = 3.086;
-const FULL_LINE_ASPECT = 6.93; // "WEST THREE" on one line — the cycle frames
-
-// The scale at which the stacked lockup's "WEST" line is exactly as tall as
-// the single-line cycle frames' text. IntroOverlay starts the final grow
-// from here, so the flip hands off into the lockup at matched size instead
-// of jumping — then it swells to full scale as its own beat.
-export const STACKED_HANDOFF_SCALE = WEST_ASPECT / FULL_LINE_ASPECT;
-
-function FrameContent({ frame }: { frame: Frame }) {
+// One flip frame: a single-line "WEST THREE" in that frame's font, or one of
+// the logo images. Its height is `frame.scale` em and its width that height
+// × the frame's aspect, so the parent's font-size alone sets its size.
+export function FrameContent({ frame }: { frame: Frame }) {
   return frame.type === "text" ? (
     <span
       className={`${frame.className} block whitespace-nowrap tracking-[-0.02em]`}
@@ -113,15 +102,15 @@ function FrameContent({ frame }: { frame: Frame }) {
   );
 }
 
-// Shared h1 shell so the overlay's intro frames and the Hero's resting
-// wordmark are pixel-identical in size — required for the overlay's
-// zoom-down to land exactly on top of the real one underneath.
+// The h1 shell for a single logo/wordmark frame. Its font-size sets the
+// frame's size (see FrameContent); its height wraps the frame, so spacing
+// above and below is whatever the page gives it.
 export function WordmarkGlyph({ frame }: { frame: Frame }) {
   return (
     <h1
-      aria-label="West Three"
+      aria-label="West Three Studios"
       className="relative flex select-none items-center text-ink"
-      style={{ fontSize: "clamp(3.5rem, 13vw, 11rem)", height: "1.1em" }}
+      style={{ fontSize: "clamp(5.5rem, 13vw, 11rem)" }}
     >
       <FrameContent frame={frame} />
     </h1>
@@ -132,29 +121,14 @@ export function StaticWordmark() {
   return <WordmarkGlyph frame={FINAL_FRAME} />;
 }
 
-// Full-bleed variant: font size is derived from the viewport minus the
-// section padding (px-6 → 3rem total, md:px-10 → 5rem total) divided by the
-// wordmark's measured 6.93 aspect, so "WEST THREE" spans the content area
-// edge to edge at any viewport — wakawaka.world's giant-heading move. The
-// intro overlay renders its frames inside this same shell so its settle
-// lands pixel-perfectly on the Hero's copy.
-export function BigWordmarkGlyph({ frame }: { frame: Frame }) {
-  return (
-    <h1
-      aria-label="West Three"
-      className="relative flex select-none items-center text-ink text-[calc((100vw-3rem)/6.93)] md:text-[calc((100vw-5rem)/6.93)]"
-      style={{ height: "1.1em" }}
-    >
-      <FrameContent frame={frame} />
-    </h1>
-  );
-}
-
 // The Waka-scale resting wordmark: "WEST" over "THREE", each line's font
 // size derived from the content width over its measured aspect so both
 // lines span edge to edge — per-word full-bleed, like wakawaka.world's
-// stacked giant "Waka" headings. The intro overlay renders this exact
-// component for its settle, so it lands pixel-perfectly on the Hero's copy.
+// stacked giant "Waka" headings. 3.086 and 3.677 are the measured
+// width÷font-size ratios of "WEST" and "THREE" in the display font at
+// -0.02em tracking (remeasure if the font, weight, tracking or copy change).
+// The intro overlay renders this exact component for its settle, so it
+// lands pixel-perfectly on the Hero's copy.
 export function BigStackedWordmark() {
   return (
     <h1

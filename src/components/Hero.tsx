@@ -5,17 +5,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { BigStackedWordmark, StaticWordmark } from "./FlipWordmark";
+import { GRADUATION_COMING_SOON } from "@/config/graduation";
 
-// width/height are each image's real pixel dimensions — the big preview
-// renders the images intrinsically sized (not fill-cropped), so its black
-// border can hug the photo itself instead of a letterboxed container.
+// The category tiles on the homepage. `thumbPosition` is where each photo is
+// anchored inside its 4:3 crop so faces stay in frame. Each image needs to be
+// at least ~1920px wide so it stays sharp on large screens.
 const works = [
   {
     id: 1,
     label: "Brand Photography",
     image: "/work/brand-photography/02.jpg",
-    width: 2560,
-    height: 3200,
     href: "/brand-photography",
     // Tight portrait — eyes/nose sit just above vertical center, so a
     // slight upward nudge keeps the whole face in frame in the 4:3 crop.
@@ -25,8 +24,6 @@ const works = [
     id: 2,
     label: "Models Portfolio Work",
     image: "/work/models-portfolio/01.jpg",
-    width: 2560,
-    height: 3840,
     href: "/models-portfolio-work",
     // Front-facing close-up from the white-tee session — his head fills
     // more of this tighter frame, so anchor a touch lower than a top crop
@@ -37,12 +34,22 @@ const works = [
     id: 3,
     label: "Fashion Photography",
     image: "/work/fashion-photography/01.jpg",
-    width: 2560,
-    height: 3200,
     href: "/fashion-photography",
     // Black-and-white profile shot — face/glasses sit about a quarter of
     // the way down, with empty backdrop above and hair trailing below.
     thumbPosition: "center 25%",
+  },
+  {
+    id: 4,
+    label: "Graduation",
+    // While GRADUATION_COMING_SOON is on (src/config/graduation.ts) this tile
+    // is a plain "Coming Soon" panel with no link and no photo. When it's
+    // switched off the tile links to /graduation and shows this image, so
+    // replace public/work/graduation/01.jpg with a real photo before then.
+    image: "/work/graduation/01.jpg",
+    href: "/graduation",
+    thumbPosition: "center 30%",
+    comingSoon: GRADUATION_COMING_SOON,
   },
 ];
 
@@ -106,8 +113,8 @@ function imageRevealProps(phase: HeroPhase, delay = 0) {
 }
 
 // Top of the page gets the giant edge-to-edge text wordmark (what the intro
-// overlay settles onto); the bottom keeps the black bubble logo — that logo
-// only appears there now.
+// overlay settles onto); the bottom shows the West Three Studios logo tile —
+// the only place that logo appears.
 function Wordmark({ delay = 0, big = false }: { delay?: number; big?: boolean }) {
   return (
     <motion.div
@@ -123,34 +130,19 @@ function Wordmark({ delay = 0, big = false }: { delay?: number; big?: boolean })
 }
 
 export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
-  const [active, setActive] = useState(0);
   const [cursor, setCursor] = useState({ x: 0, y: 0, visible: false });
-  const activeWork = works[active];
 
-  // Fixed display rank — Brand, then Fashion, then Models — independent of
-  // which one is active. Indices into `works` (whose own array order is
-  // Brand, Models, Fashion, so this isn't the same as works' index order).
-  //
-  // All three always render here, in this order, permanently — hovering
-  // only changes which one shows large in the preview next to this column;
-  // it no longer adds, removes, or reassigns anything in the thumbnail
-  // column itself. Earlier versions hid the active work's thumbnail (first
-  // via display:none, which reflowed the other two into new positions on
-  // every hover and could fire a spurious mouseenter on whichever box ended
-  // up under a still-stationary mouse; then via two rotating slots, which
-  // stopped the reflow but reassigned rank on every hover so a given photo
-  // could land in the top slot in one state and the bottom slot in
-  // another). Both read as glitching or "switching places." Static
-  // positions for all three removes the cause entirely — nothing about
-  // this column ever changes shape, order, or presence.
-  const DISPLAY_ORDER = [0, 2, 1];
+  // Fixed display order — Brand, Fashion, Models, Graduation — as indices into
+  // `works` (whose own array order differs). Nothing here ever reorders,
+  // reflows, or hides on hover, so the tiles never shift under the cursor.
+  const DISPLAY_ORDER = [0, 2, 1, 3];
 
   return (
     <section className="bg-white px-6 pt-28 pb-20 md:px-10 md:pt-36">
       <Wordmark big />
 
       <div
-        className="relative mt-10 grid grid-cols-1 gap-6 overflow-x-hidden md:mt-14 md:grid-cols-[1fr_1.4fr]"
+        className="relative mt-10 overflow-x-hidden md:mt-14"
         onMouseMove={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           setCursor({
@@ -162,105 +154,72 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
         onMouseLeave={() => setCursor((c) => ({ ...c, visible: false }))}
       >
         <motion.div
-          key={`thumbs-${phase}`}
+          key={`tiles-${phase}`}
           {...galleryMotionProps(phase)}
-          className="order-2 flex flex-col gap-4 md:order-1"
+          className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6"
         >
           {DISPLAY_ORDER.map((workIndex, slot) => {
             const work = works[workIndex];
-            const isActive = workIndex === active;
 
-            return work.href ? (
+            if (work.comingSoon) {
+              // Not a link: nothing to click, no hover zoom, and the "View"
+              // cursor pill hides while the pointer is over it.
+              return (
+                <div
+                  key={work.id}
+                  className="relative flex aspect-[4/3] cursor-default select-none items-center justify-center overflow-hidden bg-[#ece8e2] text-center"
+                  onMouseEnter={() =>
+                    setCursor((c) => ({ ...c, visible: false }))
+                  }
+                  onMouseMove={(e) => e.stopPropagation()}
+                >
+                  <motion.div
+                    className="absolute inset-0 flex flex-col items-center justify-center"
+                    {...imageRevealProps(phase, 0.55 + slot * 0.12)}
+                  >
+                    <span className="pointer-events-none absolute inset-3 border border-ink/40 md:inset-4" />
+                    <p className="font-display text-[clamp(2.25rem,13vw,4rem)] font-black uppercase leading-[0.86] tracking-[-0.02em] text-ink md:text-[clamp(2.25rem,6vw,5.5rem)]">
+                      Coming
+                      <br />
+                      Soon
+                    </p>
+                    <p className="mt-4 font-body text-[10px] uppercase tracking-[0.28em] text-ink md:mt-5 md:text-xs">
+                      {work.label} Shoots
+                    </p>
+                  </motion.div>
+                  <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1.5 font-body text-[10px] uppercase tracking-[0.1em] text-ink md:bottom-4 md:left-4 md:text-xs">
+                    {work.label}
+                  </span>
+                </div>
+              );
+            }
+
+            return (
               <Link
                 key={work.id}
                 href={work.href}
-                onMouseEnter={() => setActive(workIndex)}
-                className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-ink/5 text-center transition-shadow ${
-                  isActive ? "ring-2 ring-inset ring-ink" : ""
-                }`}
+                className="group relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-ink/5 text-center"
               >
                 <motion.div
                   className="absolute inset-0"
                   {...imageRevealProps(phase, 0.55 + slot * 0.12)}
                 >
                   <Image
-                    src={work.image!}
+                    src={work.image}
                     alt={work.label}
                     fill
-                    sizes="(min-width: 768px) 33vw, 100vw"
-                    className="object-cover"
+                    sizes="(min-width: 768px) 50vw, 100vw"
+                    priority={slot < 2}
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                     style={{ objectPosition: work.thumbPosition }}
                   />
                 </motion.div>
-                <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2.5 py-1 font-body text-[10px] uppercase tracking-[0.1em] text-ink">
+                <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1.5 font-body text-[10px] uppercase tracking-[0.1em] text-ink md:bottom-4 md:left-4 md:text-xs">
                   {work.label}
                 </span>
               </Link>
-            ) : (
-              <button
-                key={work.id}
-                type="button"
-                onMouseEnter={() => setActive(workIndex)}
-                className={`flex aspect-[4/3] items-center justify-center border border-dashed border-ink/20 p-4 text-center transition-colors hover:border-ink/40 ${
-                  isActive ? "border-solid border-ink/50" : ""
-                }`}
-              >
-                <span className="font-body text-[11px] uppercase tracking-[0.1em] text-ink/50">
-                  {work.label}
-                </span>
-              </button>
             );
           })}
-        </motion.div>
-
-        <motion.div
-          key={`preview-${phase}`}
-          {...galleryMotionProps(phase, 0.08)}
-          className="order-1 md:order-2"
-        >
-          {activeWork.href ? (
-            <Link
-              href={activeWork.href}
-              className="relative flex aspect-[4/5] items-center justify-center overflow-hidden md:aspect-auto md:h-full md:min-h-[420px]"
-            >
-              <motion.div
-                className="absolute inset-0"
-                {...imageRevealProps(phase, 0.45)}
-              >
-                {/* All three preview images stay mounted, stacked, with only
-                    the active one opaque — swapping src on a single img
-                    forces a refetch of the preview-size variant on every
-                    hover, which flashed white while it loaded. Kept loaded,
-                    the switch is an instant soft crossfade instead.
-                    Intrinsically sized (not fill) and shrunk to fit, so the
-                    black border hugs the photo itself — no letterbox box. */}
-                {works.map((work, i) => (
-                  <Image
-                    key={work.id}
-                    src={work.image!}
-                    alt={work.label}
-                    width={work.width}
-                    height={work.height}
-                    sizes="(min-width: 768px) 56vw, 100vw"
-                    className={`absolute inset-0 m-auto h-auto w-auto max-h-full max-w-full border-2 border-ink transition-opacity duration-200 ${
-                      i === active ? "opacity-100" : "opacity-0"
-                    }`}
-                    priority
-                  />
-                ))}
-              </motion.div>
-              <span className="absolute bottom-4 left-4 rounded-full bg-white/90 px-3 py-1.5 font-body text-xs uppercase tracking-[0.1em] text-ink">
-                {activeWork.label}
-              </span>
-            </Link>
-          ) : (
-            <div className="flex aspect-[4/5] items-center justify-center border border-dashed border-ink/25 p-6 text-center md:aspect-auto md:h-full md:min-h-[420px]">
-              <span className="font-body text-xs uppercase tracking-[0.12em] text-ink/50">
-                {activeWork.label}
-                <br />— photo coming soon —
-              </span>
-            </div>
-          )}
         </motion.div>
 
         <motion.div
@@ -274,7 +233,7 @@ export default function Hero({ phase = "instant" }: { phase?: HeroPhase }) {
           transition={{ duration: 0.2 }}
         >
           <span className="font-body text-[10px] uppercase tracking-[0.14em] text-white">
-            {activeWork.href ? "View" : "Coming Soon"}
+            View
           </span>
         </motion.div>
       </div>
