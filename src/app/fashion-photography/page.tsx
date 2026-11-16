@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import DragGallery from "@/components/DragGallery";
-import FolderMenu, { type Folder } from "@/components/FolderMenu";
+import type { Folder } from "@/components/FolderMenu";
+import EmailLink from "@/components/EmailLink";
+import GlassFolderMenu from "@/components/GlassFolderMenu";
 
 export const metadata: Metadata = {
   title: "Fashion Photography",
@@ -11,15 +13,24 @@ const folders: Folder[] = [
   {
     id: "contact",
     label: "Contact",
-    content:
-      "For bookings and inquiries: westthreestudio@gmail.com. Based in Phoenix, AZ — available for studio and on-location work.",
+    content: (
+      <>
+        For bookings and inquiries: <EmailLink />. Based in Phoenix, AZ —
+        available for studio and on-location work.
+      </>
+    ),
     accents: ["#5a18f0", "#2c2cf5"],
   },
   {
     id: "pricing",
     label: "Pricing",
-    content:
-      "Rates are based on session length, number of looks/setups, and usage (personal portfolio vs. commercial/brand use). Tell me what you need at westthreestudio@gmail.com and I'll send a quote within a day or two.",
+    content: (
+      <>
+        Rates are based on session length, number of looks/setups, and usage
+        (personal portfolio vs. commercial/brand use). Tell me what you need
+        at <EmailLink />{" "}and I&apos;ll send a quote within a day or two.
+      </>
+    ),
     accents: ["#ef2d3c", "#ff4d00"],
   },
   {
@@ -71,7 +82,7 @@ export default function FashionPhotographyPage() {
       </div>
 
       <div className="mt-8">
-        <FolderMenu folders={folders} />
+        <GlassFolderMenu folders={folders} />
       </div>
     </div>
   );
