@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { motion } from "motion/react";
 
 export type Folder = {
   id: string;
   label: string;
-  content: string;
+  // Plain text (all the existing pages) or richer markup (the FAQ).
+  content: ReactNode;
   // The colored folders peeking out from behind the front one, in order:
   // [directly behind, deepest]. Palette borrowed from therawmaterials.com's
   // folder drawer — the one deliberate splash of color on a B&W site.
@@ -143,9 +144,9 @@ export default function FolderMenu({ folders }: { folders: Folder[] }) {
                   transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                   className="overflow-hidden"
                 >
-                  <p className="px-6 pb-6 font-body text-sm leading-relaxed text-white/70">
+                  <div className="px-6 pb-6 font-body text-sm leading-relaxed text-white/70">
                     {folder.content}
-                  </p>
+                  </div>
                 </motion.div>
               </div>
             </motion.div>
